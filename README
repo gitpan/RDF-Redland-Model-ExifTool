@@ -1,0 +1,50 @@
+RDF-Redland-Model-ExifTool
+
+This class extends Redland set of RDF statements RDF::Redland::Model
+to process Exif meta data from ExifTool Image::ExifTool
+into RDF statements.
+
+INSTALLATION
+
+As well as Perl core modules this class also depends on:
+
+	Image::ExifTool
+	RDF::Redland::*
+	Regexp::Common - to check URI syntax
+
+To install this class, run the following commands:
+
+	perl Makefile.PL
+	make
+	make test
+	make install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this class with the
+perldoc command.
+
+    perldoc RDF::Redland::Model::ExifTool
+
+You can also look for information at:
+
+    RT, CPAN's request tracker
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=RDF-Redland-Model-ExifTool
+
+    AnnoCPAN, Annotated CPAN documentation
+        http://annocpan.org/dist/RDF-Redland-Model-ExifTool
+
+    CPAN Ratings
+        http://cpanratings.perl.org/d/RDF-Redland-Model-ExifTool
+
+    Search CPAN
+        http://search.cpan.org/dist/RDF-Redland-Model-ExifTool
+
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2008 Andrew Flint
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
