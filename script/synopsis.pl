@@ -7,7 +7,9 @@
 #
 
 use Image::ExifTool;
-use RDF::Redland;
+use RDF::Redland::Storage;
+use RDF::Redland::Serializer;
+use RDF::Redland::URINode;
 use RDF::Redland::Model::ExifTool;
 
 my $storage = new RDF::Redland::Storage("hashes", "",

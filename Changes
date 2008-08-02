@@ -1,5 +1,8 @@
 Revision history for RDF-Redland-Model-ExifTool
 
-0.01    Date/time
-        First version, released on an unsuspecting world.
+0.02	
+    * t/rdf-redland-model-exiftool.t, script/(bfhm|synopsis).pl:
+      replaced use RDF::Redland with use specific classes
 
+0.01  2008-07-31 09:15:22
+      initial version
