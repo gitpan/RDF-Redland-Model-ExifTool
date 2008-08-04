@@ -273,18 +273,16 @@ RDF::Redland::Model::ExifTool - extends Redland set of RDF statements
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
     use Image::ExifTool;
-    use RDF::Redland::Storage;
-    use RDF::Redland::Serializer;
-    use RDF::Redland::URINode;
+    use RDF::Redland;
     use RDF::Redland::Model::ExifTool;
     
     my $storage = new RDF::Redland::Storage("hashes", "",

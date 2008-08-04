@@ -1,6 +1,9 @@
 Revision history for RDF-Redland-Model-ExifTool
 
-0.02	
+0.03  2008-08-04 06:51:00
+    * undid previous faulty fix, Makefile.PL added pre-requisites
+
+0.02  2008-08-01 23:44:05
     * t/rdf-redland-model-exiftool.t, script/(bfhm|synopsis).pl:
       replaced use RDF::Redland with use specific classes
 

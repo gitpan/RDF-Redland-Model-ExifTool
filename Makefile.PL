@@ -9,6 +9,9 @@ WriteMakefile(
     ABSTRACT_FROM       => 'lib/RDF/Redland/Model/ExifTool.pm',
     PL_FILES            => {},
     PREREQ_PM => {
+	'Image::ExifTool' => 0,
+	'RDF::Redland' => 0,
+	'Regexp::Common' => 0,
         'Test::More' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

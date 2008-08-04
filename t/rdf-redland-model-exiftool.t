@@ -3,8 +3,8 @@ use warnings;
 
 use Test;
 
+use RDF::Redland;
 use Image::ExifTool;
-use RDF::Redland::Storage;
 use RDF::Redland::Model::ExifTool;
 
 BEGIN { plan tests => 15, todo => [7, 8, 12, 13, 14, 15] }; 
