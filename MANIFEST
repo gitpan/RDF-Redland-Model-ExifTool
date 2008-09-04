@@ -9,6 +9,7 @@ t/00-load.t
 t/pod-coverage.t
 t/pod.t
 t/rdf-redland-model-exiftool.t
+t/data/artist_uri.jpg
 t/data/no_comment.jpg
 t/data/not_a_jpg.txt
 t/data/ntriples_comment.jpg

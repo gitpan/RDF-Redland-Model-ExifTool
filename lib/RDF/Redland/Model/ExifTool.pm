@@ -20,18 +20,15 @@ use URI::file;
 
 use base qw(RDF::Redland::Model);
 
-#----default configuration:begin----#
-# Exif tags to parse for RDF statements
+#----default configuration:begin: see L</Configuration>----#
 my @_Parse_Tag = ("Comment", "ImageDescription");
 
-# RDF syntax to parse Exif tag value
-# parameter to RDF::Redland::Parser
 my @_Parse_Syntax = ("turtle", "rdfxml");
 
-# Exif tag to RDF predicate translation
 my $EXIF = "http://www.w3.org/2003/12/exif/ns#";
 my %_Translate_Tag = (
     Aperture => new RDF::Redland::URINode($EXIF . "apertureValue"),
+    Artist => new RDF::Redland::URINode($EXIF . "artist"),
     Comment => new RDF::Redland::URINode($EXIF . "userComment"),
     DateTimeOriginal => new RDF::Redland::URINode(
                             $EXIF . "dateTimeOriginal"),
@@ -241,7 +238,12 @@ sub _translate_tag {
             $value =~ s/^.* ([0-9\.]+).*$/$1/;
         }
 
-        my $object = new RDF::Redland::LiteralNode("$value");
+        my $object;
+        if ($value =~ /$RE{URI}{HTTP}/) {
+            $object = new RDF::Redland::URINode("$value");
+        } else {
+            $object = new RDF::Redland::LiteralNode("$value");
+        }
         if (!$object) {
             croak "_translate_tag: failed to create object" .
                   "($tag, $value)";
@@ -265,19 +267,15 @@ sub _translate_tag {
 
 =head1 NAME
 
-RDF::Redland::Model::ExifTool - extends Redland set of RDF statements 
-                                (RDF::Redland::Model) to process
-                                Exif meta data from 
-                                ExifTool (Image::ExifTool)
-                                into RDF statements
+RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -305,7 +303,7 @@ our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
-Exif meta data is in tag and value pairs e.g. Aperture 5.0.
+Exif meta data is in tag and value pairs.
 ExifTool reads, writes and updates Exif meta data stored in files.
 See also ExifTool web site
 L<http://www.sno.phy.queensu.ca/~phil/exiftool/>.
@@ -357,41 +355,7 @@ ignore tag and value
 
 =head2 Configuration
 
-This class is configured by a hash of data structures as follows:
-
-=over
-
-=item ParseTag
-
-list of ExifTool tags whose values are parsed for statements
-e.g. Aperture, DateTimeOriginal and Comment.
-Get ExifTool's list of tags with C<exiftool -list> .
-Get a file's tags and values with
-C<exiftool -s E<lt>fileE<gt>> .
-
-=item ParseSyntax
-
-list of Redland RDF syntax used in parsing tag values e.g. 
-rdfxml, ntriples, turtle and guess.
-See list of syntax in rdfproc man page, command parse.
-
-=item TranslateTag
-
-hash of ExifTool tag to the equivalent RDF predicate.
-Predicates are absolute HTTP URIs.
-
-=back
-
-ParseTag or TranslateTag or both must be set.
-If ParseTag is set then ParseSyntax must be too.
-
-The default configuration gets meta data including:
-user comment, image description, date/time of creation,
-camera model and exposure.
-
-Methods L</get_exif_config> and L</set_exif_config> 
-return and update the configuration.
-Here is an example configuration:
+This class' configuration is a hash of data structures e.g.:
 
     $config = {
         ParseTag => ["Comment"],
@@ -406,13 +370,46 @@ Here is an example configuration:
         },
     };
 
+=over
+
+=item ParseTag
+
+list of ExifTool tags whose values are parsed for statements
+e.g. Aperture, DateTimeOriginal and Comment.
+
+    exiftool -s my.jpg    # lists all tag and value pairs in my.jpg
+    exiftool -list        # lists all ExifTool's tags
+
+If ParseTag is set then ParseSyntax must be too.
+TranslateTag must be set if ParseTag is not.
+
+=item ParseSyntax
+
+list of Redland RDF syntax used in parsing tag values 
+e.g. rdfxml, ntriples, turtle and guess.
+See parse command on rdfproc man page for a list of syntax.
+
+=item TranslateTag
+
+hash of ExifTool tag to the equivalent RDF predicate.
+Predicates are absolute HTTP URIs.
+ParseTag must be set if TranslateTag is not.
+
+=back
+
+The default configuration gets meta data including:
+user comment, image description, date/time of creation,
+camera model and exposure.
+
+The configuration is returned and updated by methods
+L</get_exif_config> and L</set_exif_config>.
+
 =head1 METHODS
 
 =head2 add_exif_statements
 
 Processes meta data from list of ExifTool instances
-into RDF statements stored in this instance.
-See also Exif meta data processing L</Configuration>.
+into RDF statements stored in this instance using L</Configuration>.
 
 Returns empty list if successful
 otherwise returns list of error strings.
@@ -517,12 +514,12 @@ sub get_exif_config {
 
 =head2 get_exif_tags
 
-Returns list of Exif tags that can be processed by 
-this instance's L</Configuration>.
+Returns list of ExifTool tags that can be processed by this 
+instance's L<Configuration>.
 
-By default ExifTool C<ImageInfo> gets all Exif tags. 
-Use this method to get only those tags that can be processed 
-by this instance:
+By default ExifTool's C<ImageInfo> gets all tags in a file.
+ExifTool can be speeded up by reducing the amount of work it does,
+getting only tags that can be processed:
 
     my $model = new RDF::Redland::Model::ExifTool(...);
     my $exiftool = new Image::ExifTool;
@@ -558,11 +555,21 @@ otherwise returns list of error strings.
 
 sub set_exif_config {
     my($self, $config) = @_;
+    my %VARIABLE = ( 
+        ParseTag => 1,
+        ParseSyntax => 1,
+        TranslateTag => 1 );
     my @error = ();
     my(@pt, @ps, %tt) = ();
 
 #print STDERR "set_exif_config:begin\n";
     if ($config) {
+        foreach my $v (keys %{$config}) {
+            if (!$VARIABLE{$v}) {
+                @error = (@error, "unknown config variable ($v)");
+            }
+        }
+
         @pt = _copy_to_list($config->{ParseTag});
 
         @ps = _copy_to_list($config->{ParseSyntax});

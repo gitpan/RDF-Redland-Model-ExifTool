@@ -1,11 +1,16 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.04  2008-09-04 09:34:35
+    * tag values that are HTTP URI strings now translated 
+      into URI objects not literals 
+    * unknown config variables now returned as errors - set_exif_config()
+
 0.03  2008-08-04 06:51:00
-    * undid previous faulty fix, Makefile.PL added pre-requisites
+    * pre-requisites added to Makefile.PL
+    * faulty fix 0.02 undone
 
 0.02  2008-08-01 23:44:05
-    * t/rdf-redland-model-exiftool.t, script/(bfhm|synopsis).pl:
-      replaced use RDF::Redland with use specific classes
+    * replaced use RDF::Redland with use specific classes
 
 0.01  2008-07-31 09:15:22
       initial version

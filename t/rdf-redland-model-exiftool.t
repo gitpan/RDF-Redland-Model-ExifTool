@@ -7,7 +7,7 @@ use RDF::Redland;
 use Image::ExifTool;
 use RDF::Redland::Model::ExifTool;
 
-BEGIN { plan tests => 15, todo => [7, 8, 12, 13, 14, 15] }; 
+BEGIN { plan tests => 16, todo => [8, 9, 13, 14, 15, 16] }; 
 
 my $storage = new RDF::Redland::Storage("hashes", "test",
                   "new='yes',hash-type='memory'");
@@ -26,8 +26,9 @@ foreach my $photo ("t/data/no_comment.jpg",
                    "t/data/ntriples_comment.jpg",
                    "t/data/turtle_comment.jpg",
                    "t/data/rdfxml_comment.jpg",
+                   "t/data/artist_uri.jpg",
                    "t/data/not_a_jpg.txt",
-                   "t/data/does_not_exist.jpg") {
+                   "t/data/does_not_exist.jpg",) {
     $exiftool->ImageInfo($photo);
     @error = $model->add_exif_statements($exiftool);
     ok(!@error);
