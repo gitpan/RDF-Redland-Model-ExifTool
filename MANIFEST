@@ -3,7 +3,6 @@ MANIFEST
 Makefile.PL
 README
 lib/RDF/Redland/Model/ExifTool.pm
-script/bfhm.pl
 script/synopsis.pl
 t/00-load.t
 t/pod-coverage.t

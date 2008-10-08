@@ -271,11 +271,11 @@ RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -283,12 +283,15 @@ our $VERSION = '0.04';
     use RDF::Redland;
     use RDF::Redland::Model::ExifTool;
     
+    # creates an RDF model in memory
     my $storage = new RDF::Redland::Storage("hashes", "",
                              "new='yes',hash-type='memory'");
     my $model = new RDF::Redland::Model::ExifTool($storage, "");
+    my $EMPTY_MODEL_N_STATEMENTS = $model->size;
 
+    # processes Exif meta data from each file into RDF statements
+    # in model and prints any errors
     my $exiftool = new Image::ExifTool;
-
     foreach my $file (@ARGV) {
         $exiftool->ImageInfo($file);
 
@@ -297,9 +300,13 @@ our $VERSION = '0.04';
         }
     }
 
-    my $BASE = new RDF::Redland::URINode("http://www.theflints.net.nz/");
-    my $serializer = new RDF::Redland::Serializer("turtle");
-    print $serializer->serialize_model_to_string($BASE, $model);
+    # prints any RDF statements in model with Turtle syntax
+    if ($EMPTY_MODEL_N_STATEMENTS < $model->size) {
+        my $serializer = new RDF::Redland::Serializer("turtle");
+        print $serializer->serialize_model_to_string(
+              new RDF::Redland::URINode("http://www.theflints.net.nz/"), 
+              $model);
+    }
 
 =head1 DESCRIPTION
 
@@ -429,18 +436,18 @@ sub add_exif_statements {
                 $subject = _get_subject($et);
                 if ($subject) {
                     if ($et->GetValue("Error")) {
-                        $e = "param[$i] ExifTool " . 
+                        $e = "exiftool[$i] ExifTool " . 
                              $et->GetValue("Error") . " " .
                              $subject->as_string;
                     }
                 } else {
-                    $e = "param[$i] ExifTool failed to get subject";
+                    $e = "exiftool[$i] ExifTool failed to get subject";
                 }
             } else {
-                $e = "param[$i] must be ExifTool";
+                $e = "exiftool[$i] must be ExifTool";
             } 
         } else {
-            $e = "param[$i] must be defined";
+            $e = "exiftool[$i] must be defined";
         }
 
         if (!$e) {
@@ -587,8 +594,8 @@ sub set_exif_config {
                               "create predicate ($predicate_uri)";
                     }
                 } else {
-                    @error = (@error, "TranslateTag must map tag $tag " .
-                              "to absolute HTTP scheme predicate URI");
+                    @error = (@error, "TranslateTag must map tag " .
+                              "to absolute HTTP URI predicate ($tag)");
                 }
             }
         }
@@ -603,7 +610,7 @@ sub set_exif_config {
                               "ParseSyntax must be defined too");
         } 
     } else {
-        @error = (@error, "config argument must be defined");
+        @error = (@error, "config must be defined");
     }
 
     if (!@error) {

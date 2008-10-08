@@ -1,21 +1,16 @@
-#
-# synopsis.pl - prints Exif meta data from file arguments as
-#               RDF statements in Turtle syntax
-#
-# This is the example script from the Synopsis of
-# Perl module RDF::Redland::Model::ExifTool.
-#
-
 use Image::ExifTool;
 use RDF::Redland;
 use RDF::Redland::Model::ExifTool;
 
+# creates an RDF model in memory
 my $storage = new RDF::Redland::Storage("hashes", "",
                          "new='yes',hash-type='memory'");
 my $model = new RDF::Redland::Model::ExifTool($storage, "");
+my $EMPTY_MODEL_N_STATEMENTS = $model->size;
 
+# processes Exif meta data from each file into RDF statements
+# in model and prints any errors
 my $exiftool = new Image::ExifTool;
-
 foreach my $file (@ARGV) {
     $exiftool->ImageInfo($file);
 
@@ -24,6 +19,10 @@ foreach my $file (@ARGV) {
     }
 }
 
-my $BASE = new RDF::Redland::URINode("http://www.theflints.net.nz/");
-my $serializer = new RDF::Redland::Serializer("turtle");
-print $serializer->serialize_model_to_string($BASE, $model);
+# prints any RDF statements in model with Turtle syntax
+if ($EMPTY_MODEL_N_STATEMENTS < $model->size) {
+    my $serializer = new RDF::Redland::Serializer("turtle");
+    print $serializer->serialize_model_to_string(
+          new RDF::Redland::URINode("http://www.theflints.net.nz/"), 
+          $model);
+}

@@ -1,5 +1,9 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.05  2008-10-08 09:53:48
+    * improved test script - t/rdf-redland-model-exiftool.t
+    * tweaked synopsis and error messages to improve consistency
+
 0.04  2008-09-04 09:34:35
     * tag values that are HTTP URI strings now translated 
       into URI objects not literals 
