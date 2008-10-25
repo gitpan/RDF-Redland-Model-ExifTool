@@ -27,25 +27,27 @@ my @_Parse_Syntax = ("turtle", "rdfxml");
 
 my $EXIF = "http://www.w3.org/2003/12/exif/ns#";
 my %_Translate_Tag = (
-    Aperture => new RDF::Redland::URINode($EXIF . "apertureValue"),
-    Artist => new RDF::Redland::URINode($EXIF . "artist"),
-    Comment => new RDF::Redland::URINode($EXIF . "userComment"),
-    DateTimeOriginal => new RDF::Redland::URINode(
-                            $EXIF . "dateTimeOriginal"),
-    FocalLength35efl => new RDF::Redland::URINode(
-                            $EXIF . "focalLengthIn35mmFilm"),
-    ImageDescription => new RDF::Redland::URINode(
-                            $EXIF . "imageDescription"),
-    ISO => new RDF::Redland::URINode($EXIF . "ISOSpeedRatings"),
-    Make => new RDF::Redland::URINode($EXIF . "make"),
-    Model => new RDF::Redland::URINode($EXIF . "model"),
-    ShutterSpeed => new RDF::Redland::URINode(
-                        $EXIF . "shutterSpeedValue"),
+    Aperture => $EXIF . "apertureValue",
+    Artist => $EXIF . "artist",
+    Comment => $EXIF . "userComment",
+    DateTimeOriginal => $EXIF . "dateTimeOriginal",
+    FocalLength35efl => $EXIF . "focalLengthIn35mmFilm",
+    ImageDescription => $EXIF . "imageDescription",
+    ISO => $EXIF . "ISOSpeedRatings",
+    Make => $EXIF . "make",
+    Model => $EXIF . "model",
+    ShutterSpeed => $EXIF . "shutterSpeedValue",
 );
 #----default configuration:end----#
 
-# remembers status of last RDF parse attempt
+# last RDF parse status
 my $_Parse_Ok;
+
+# processable tag list
+my @_Tag = ();
+
+# ExifTool tag to RDF predicate hash
+my %_Predicate = ();
 
 
 #
@@ -90,7 +92,17 @@ sub _get_predicate {
     my($tag) = @_;
 
 #print STDERR "_get_predicate:begin:$tag\n";
-    my $predicate = $_Translate_Tag{"$tag"};
+    my $predicate = $_Predicate{"$tag"};
+    if (!$predicate) {
+        my $predicate_uri = $_Translate_Tag{"$tag"};
+        if ($predicate_uri) {
+            $predicate = new RDF::Redland::URINode("$predicate_uri");
+            if (!$predicate) {
+                 croak "_get_predicate: failed to " .
+                       "create predicate ($predicate_uri)";
+            }
+        }
+    }
 #print STDERR "_get_predicate:end"; if ($predicate) { print STDERR ":" . $predicate->as_string }; print STDERR "\n";
 
     return $predicate;
@@ -271,11 +283,11 @@ RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
@@ -284,28 +296,30 @@ our $VERSION = '0.05';
     use RDF::Redland::Model::ExifTool;
     
     # creates an RDF model in memory
-    my $storage = new RDF::Redland::Storage("hashes", "",
-                             "new='yes',hash-type='memory'");
-    my $model = new RDF::Redland::Model::ExifTool($storage, "");
-    my $EMPTY_MODEL_N_STATEMENTS = $model->size;
+    $storage = new RDF::Redland::Storage("hashes", "",
+                           "new='yes',hash-type='memory'");
+    $model = new RDF::Redland::Model::ExifTool($storage, "");
+    $EMPTY_MODEL_N_STATEMENTS = $model->size;
 
     # processes Exif meta data from each file into RDF statements
     # in model and prints any errors
-    my $exiftool = new Image::ExifTool;
-    foreach my $file (@ARGV) {
-        $exiftool->ImageInfo($file);
+    $exiftool = new Image::ExifTool;
+    foreach $file (@ARGV) {
+        $exiftool->ImageInfo($file, $model->get_exif_tags);
 
-        foreach my $error ($model->add_exif_statements($exiftool)) {
+        foreach $error ($model->add_exif_statements($exiftool)) {
             print STDERR $error . "\n";
         }
     }
+    $model->sync;
 
     # prints any RDF statements in model with Turtle syntax
     if ($EMPTY_MODEL_N_STATEMENTS < $model->size) {
-        my $serializer = new RDF::Redland::Serializer("turtle");
+        $serializer = new RDF::Redland::Serializer("turtle");
         print $serializer->serialize_model_to_string(
               new RDF::Redland::URINode("http://www.theflints.net.nz/"), 
               $model);
+        undef $serializer;  # prevents librdf_serializer null exception
     }
 
 =head1 DESCRIPTION
@@ -326,7 +340,7 @@ instances of ExifTool C<Image::ExifTool>.
 
 =head2 Processing meta data
 
-This class processes Exif meta data from a file read through an ExifTool
+This RDF model processes Exif meta data from a file read through an ExifTool
 as follows:
 
 =over
@@ -358,6 +372,10 @@ ignore tag and value
 
 =back
 
+=item *
+
+add any RDF statements to this model
+
 =back
 
 =head2 Configuration
@@ -381,11 +399,8 @@ This class' configuration is a hash of data structures e.g.:
 
 =item ParseTag
 
-list of ExifTool tags whose values are parsed for statements
-e.g. Aperture, DateTimeOriginal and Comment.
-
-    exiftool -s my.jpg    # lists all tag and value pairs in my.jpg
-    exiftool -list        # lists all ExifTool's tags
+list of ExifTool tags whose values are parsed for RDF statements
+e.g. Comment.
 
 If ParseTag is set then ParseSyntax must be too.
 TranslateTag must be set if ParseTag is not.
@@ -398,9 +413,13 @@ See parse command on rdfproc man page for a list of syntax.
 
 =item TranslateTag
 
-hash of ExifTool tag to the equivalent RDF predicate.
-Predicates are absolute HTTP URIs.
-ParseTag must be set if TranslateTag is not.
+hash of ExifTool tag and equivalent RDF predicate.
+
+    exiftool -s my.jpg    # lists all tag and value pairs in file my.jpg
+    exiftool -list        # lists all ExifTool's tags
+
+Predicates must be absolute HTTP URIs.
+ParseTag and ParseSyntax must be set if TranslateTag is not.
 
 =back
 
@@ -411,12 +430,36 @@ camera model and exposure.
 The configuration is returned and updated by methods
 L</get_exif_config> and L</set_exif_config>.
 
+=head2 Configuration files
+
+The following configuration file F<my.conf> gets
+creation date/time and any user comment:
+
+    # Note: URI anchor char '#' must be escaped '\#' or it is treated as comment
+    <TranslateTag>
+        Comment          http://www.w3.org/2003/12/exif/ns\#userComment
+        DateTimeOriginal http://www.w3.org/2003/12/exif/ns\#dateTimeOriginal
+    </TranslateTag>
+
+    ParseTag Comment
+
+    ParseSyntax rdfxml
+    ParseSyntax turtle
+
+Use C<Config::General> to set C<model>'s configuration from
+the file as follows:
+
+    use Config::General;
+    $config = new Config::General("my.conf");
+    %h = $config->getall;
+    @error = $model->set_exif_config(\%h);
+
 =head1 METHODS
 
 =head2 add_exif_statements
 
-Processes meta data from list of ExifTool instances
-into RDF statements stored in this instance using L</Configuration>.
+Processes Exif meta data from list of ExifTools
+into RDF statements stored in this model using L</Configuration>.
 
 Returns empty list if successful
 otherwise returns list of error strings.
@@ -481,7 +524,7 @@ sub add_exif_statements {
 
 =head2 get_exif_config
 
-Returns copy of this instance's L</Configuration>.
+Returns copy of this RDF model's L</Configuration>.
 
 =cut
 
@@ -495,22 +538,12 @@ sub get_exif_config {
     $config->{ParseSyntax} = [@_Parse_Syntax];
 
     foreach my $tag (keys(%_Translate_Tag)) {
-        my $predicate = $_Translate_Tag{"$tag"};
-        if (!$predicate) {
+        my $predicate_uri = $_Translate_Tag{"$tag"};
+        if (!$predicate_uri) {
             croak "get_exif_config: no predicate for tag ($tag)";
         }
 
-        my $predicate_uri = $predicate->uri;
-        if (!$predicate_uri) {
-            croak "get_exif_config: failed to get URI for predicate";
-        }
-
-        my $s = $predicate_uri->as_string;
-        if (!$s) {
-            croak "get_exif_config: failed to get predicate URI as string";
-        }
-
-        $tt{"$tag"} = $s;
+        $tt{"$tag"} = $predicate_uri;
     }
     $config->{TranslateTag} = \%tt;
 #print STDERR "get_exif_config:end\n";
@@ -522,29 +555,33 @@ sub get_exif_config {
 =head2 get_exif_tags
 
 Returns list of ExifTool tags that can be processed by this 
-instance's L<Configuration>.
+RDF model, the tags in L</Configuration>.
 
-By default ExifTool's C<ImageInfo> gets all tags in a file.
-ExifTool can be speeded up by reducing the amount of work it does,
-getting only tags that can be processed:
+By default ExifTool's C<ImageInfo> gets all tags from a file.
+Getting the subset of tags that this model can process
+reduces the work ExifTool has to do. For example:
 
-    my $model = new RDF::Redland::Model::ExifTool(...);
-    my $exiftool = new Image::ExifTool;
-    
-    $exiftool->ImageInfo("my.jpg", $model->get_exif_tags);
+    $exiftool->ImageInfo("my.jpg", $model->get_exif_tags)
+
+asks ExifTool to get from F<my.jpg> only those tag and value pairs 
+that C<model> can process.
 
 =cut
 
 sub get_exif_tags {
-    my @tag = ();
-
 #print STDERR "get_exif_tags:begin\n";
-    my @t = (sort(@_Parse_Tag, keys %_Translate_Tag), "");
-    for (my $i = 0; $i < (scalar(@t) - 1); $i++) {
-        if ($t[$i] ne $t[$i + 1]) {
-            @tag = (@tag, $t[$i]);
+    if (!@_Tag) {
+        @_Tag = ();
+
+        my @t = (sort(@_Parse_Tag, keys %_Translate_Tag), "");
+        for (my $i = 0; $i < (scalar(@t) - 1); $i++) {
+            if ($t[$i] ne $t[$i + 1]) {
+                @_Tag = (@_Tag, $t[$i]);
+            }
         }
     }
+
+    my @tag = @_Tag;
 #print STDERR "get_exif_tags:end:" . scalar(@tag) . "\n";
 
     return @tag;
@@ -553,9 +590,9 @@ sub get_exif_tags {
 
 =head2 set_exif_config
 
-Updates this instance's L</Configuration>.
+Updates this RDF model's L</Configuration>.
 
-Returns empty list if successful 
+Returns empty list if configuration updated
 otherwise returns list of error strings.
 
 =cut
@@ -586,13 +623,7 @@ sub set_exif_config {
                 my $predicate_uri = $config->{TranslateTag}{"$tag"};
                 if ($predicate_uri &&
                     ($predicate_uri =~ /$RE{URI}{HTTP}/)) {
-                    my $predicate = new RDF::Redland::URINode($predicate_uri);
-                    if ($predicate) {
-                        $tt{"$tag"} = $predicate;
-                    } else {
-                        croak "set_exif_config: failed to " .
-                              "create predicate ($predicate_uri)";
-                    }
+                    $tt{"$tag"} = $predicate_uri;
                 } else {
                     @error = (@error, "TranslateTag must map tag " .
                               "to absolute HTTP URI predicate ($tag)");
@@ -617,6 +648,10 @@ sub set_exif_config {
         @_Parse_Tag = @pt;
         @_Parse_Syntax = @ps;
         %_Translate_Tag = %tt;
+
+        # discard last configuration's list of processable tags,
+        # get_exif_tags() will update on demand
+        @_Tag = undef;
     }
 #print STDERR "set_exif_config:end:" . scalar(@error) . "\n";
 

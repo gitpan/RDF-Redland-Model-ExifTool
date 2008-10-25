@@ -10,7 +10,7 @@ my @GOOD_FILE = ("t/data/no_comment.jpg",
 my @BAD_FILE = ("t/data/not_a_jpg.txt",
                 "t/data/does_not_exist.jpg");
 
-use Test::Simple tests => 24;
+use Test::Simple tests => 25;
 
 use RDF::Redland;
 use Image::ExifTool;
@@ -85,6 +85,12 @@ my $bad_variable = {
     },
     BadVariable => 12,
 };
+my $bad_syntax = {
+    ParseTag => "Comment",
+    ParseSyntax => "two words",
+    ParseSyntax => "",
+    ParseSyntax => undef,
+};
 
 foreach my $c ($min_parse, $min_trans, $config) {
     @error = $model->set_exif_config($c);
@@ -92,7 +98,7 @@ foreach my $c ($min_parse, $min_trans, $config) {
 }
 
 foreach my $c ($parse_no_syntax, $bad_trans, 
-               $bad_variable, { }, undef) {
+               $bad_variable, $bad_syntax, { }, undef) {
     @error = $model->set_exif_config($c);
     ok(@error, "failed to set bad configuration");
     foreach my $e (@error) {

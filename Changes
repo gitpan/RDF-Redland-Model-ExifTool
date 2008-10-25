@@ -1,8 +1,15 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.06  2008-10-24 07:26:37
+    * synopsis now uses get_exif_tags() to speed up ExifTool ImageInfo()
+    * synopsis now undefs serializer to prevent null exception on exit
+    * section on setting configuration from file added to documentation
+    * list of processable ExifTool tags now cached for reuse
+    * RDF predicates now created from URIs on demand 
+
 0.05  2008-10-08 09:53:48
-    * improved test script - t/rdf-redland-model-exiftool.t
-    * tweaked synopsis and error messages to improve consistency
+    * test script improved - t/rdf-redland-model-exiftool.t
+    * synopsis and error messages made more consistent
 
 0.04  2008-09-04 09:34:35
     * tag values that are HTTP URI strings now translated 
