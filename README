@@ -1,15 +1,16 @@
 RDF-Redland-Model-ExifTool
 
-This class extends the Redland set of RDF statements, or model,
-to process Exif meta data from ExifTool.
+This class:
+
+	* extends the Redland set of RDF statements, or model,
+          to process Exif meta data from ExifTool.
+	* is used by an example script, exif2rdf, to print
+          Exif meta data from files as RDF statements
 
 INSTALLATION
 
-As well as Perl core modules this class also depends on:
-
-	Image::ExifTool
-	RDF::Redland::*
-	Regexp::Common - check URI syntax
+This class depends on non-core Perl modules and classes,
+see PREREQ_PM in Makefile.PL .
 
 To install this class, run the following commands:
 

@@ -12,6 +12,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Config::General;
 use File::Spec;
 use Image::ExifTool;
 use RDF::Redland;
@@ -283,11 +284,11 @@ RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 SYNOPSIS
 
@@ -296,7 +297,7 @@ our $VERSION = '0.06';
     use RDF::Redland::Model::ExifTool;
     
     # creates an RDF model in memory
-    $storage = new RDF::Redland::Storage("hashes", "",
+    $storage = new RDF::Redland::Storage("hashes", "exif_meta_data",
                            "new='yes',hash-type='memory'");
     $model = new RDF::Redland::Model::ExifTool($storage, "");
     $EMPTY_MODEL_N_STATEMENTS = $model->size;
@@ -322,6 +323,8 @@ our $VERSION = '0.06';
         undef $serializer;  # prevents librdf_serializer null exception
     }
 
+For a more complete example see script F<exif2rdf> .
+
 =head1 DESCRIPTION
 
 Exif meta data is in tag and value pairs.
@@ -332,7 +335,12 @@ L<http://www.sno.phy.queensu.ca/~phil/exiftool/>.
 RDF meta data is in statements -
 subject, predicate or verb and object triples.
 Redland Libraries provide support for RDF.
-See also Redland RDF Libraries web site L<http://librdf.org/>.
+Sadly the version of Redland currently offered by CPAN
+is out of date and fails testing. 
+For Debian or Fedora download the packages from the
+Redland RDF Libraries web site L<http://librdf.org/>,
+for Ubuntu install package C<librdf-perl> otherwise build from source.
+
 
 This class extends the Redland set of RDF statements 
 C<RDF::Redland::Model> to process Exif meta data read from 
@@ -380,7 +388,10 @@ add any RDF statements to this model
 
 =head2 Configuration
 
-This class' configuration is a hash of data structures e.g.:
+This class' configuration is a hash of data structures
+that can be set from a file (with L</set_exif_config_from_file>) 
+or variable (L</set_exif_config>).
+For example a variable configuration:
 
     $config = {
         ParseTag => ["Comment"],
@@ -395,12 +406,16 @@ This class' configuration is a hash of data structures e.g.:
         },
     };
 
+this configuration gets exposure data (Aperture, ISO and ShutterSpeed)
+then tries to parse RDF statements from any Comment value as 
+Turtle or RDF/XML and failing that treats as text.
+
 =over
 
 =item ParseTag
 
 list of ExifTool tags whose values are parsed for RDF statements
-e.g. Comment.
+for example Comment.
 
 If ParseTag is set then ParseSyntax must be too.
 TranslateTag must be set if ParseTag is not.
@@ -408,7 +423,7 @@ TranslateTag must be set if ParseTag is not.
 =item ParseSyntax
 
 list of Redland RDF syntax used in parsing tag values 
-e.g. rdfxml, ntriples, turtle and guess.
+for example rdfxml, ntriples, turtle and guess.
 See parse command on rdfproc man page for a list of syntax.
 
 =item TranslateTag
@@ -426,33 +441,6 @@ ParseTag and ParseSyntax must be set if TranslateTag is not.
 The default configuration gets meta data including:
 user comment, image description, date/time of creation,
 camera model and exposure.
-
-The configuration is returned and updated by methods
-L</get_exif_config> and L</set_exif_config>.
-
-=head2 Configuration files
-
-The following configuration file F<my.conf> gets
-creation date/time and any user comment:
-
-    # Note: URI anchor char '#' must be escaped '\#' or it is treated as comment
-    <TranslateTag>
-        Comment          http://www.w3.org/2003/12/exif/ns\#userComment
-        DateTimeOriginal http://www.w3.org/2003/12/exif/ns\#dateTimeOriginal
-    </TranslateTag>
-
-    ParseTag Comment
-
-    ParseSyntax rdfxml
-    ParseSyntax turtle
-
-Use C<Config::General> to set C<model>'s configuration from
-the file as follows:
-
-    use Config::General;
-    $config = new Config::General("my.conf");
-    %h = $config->getall;
-    @error = $model->set_exif_config(\%h);
 
 =head1 METHODS
 
@@ -590,9 +578,9 @@ sub get_exif_tags {
 
 =head2 set_exif_config
 
-Updates this RDF model's L</Configuration>.
+Replaces this RDF model's L</Configuration>.
 
-Returns empty list if configuration updated
+Returns empty list if configuration replaced
 otherwise returns list of error strings.
 
 =cut
@@ -651,9 +639,59 @@ sub set_exif_config {
 
         # discard last configuration's list of processable tags,
         # get_exif_tags() will update on demand
-        @_Tag = undef;
+        @_Tag = ();
     }
 #print STDERR "set_exif_config:end:" . scalar(@error) . "\n";
+
+    return @error;
+}
+
+=head2 set_exif_config_from_file
+
+Replaces this RDF model's L</Configuration> from configuration file. 
+
+Returns empty list if configuration replaced
+otherwise returns list of error strings.
+
+For example this is the file equivalent of the example
+L</Configuration>:
+
+    # Note: URI anchor char '#' must be escaped '\#' or it is treated as comment
+    <TranslateTag>
+      Aperture      http://www.w3.org/2003/12/exif/ns\#apertureValue
+      Comment       http://www.w3.org/2003/12/exif/ns\#userComment
+      ISO           http://www.w3.org/2003/12/exif/ns\#ISOSpeedRatings
+      ShutterSpeed  http://www.w3.org/2003/12/exif/ns\#shutterSpeedValue
+    </TranslateTag>
+    
+    ParseTag Comment
+    
+    ParseSyntax turtle
+    ParseSyntax rdfxml
+
+=cut
+
+sub set_exif_config_from_file {
+    my($self, $file) = @_;
+    my @error = ();
+
+#print STDERR "set_exif_config_from_file:begin\n";
+    if ($file) {
+        if (-r $file) {
+            my $config = new Config::General($file);
+            if ($config) {
+                my %c = $config->getall;
+                @error = set_exif_config($self, \%c);
+            } else {
+                @error = ("failed to get config from file ($file)");
+            }
+        } else {
+            @error = ("config file must be readable ($file)");
+        }
+    } else {
+        @error = ("config file must be defined");
+    }
+#print STDERR "set_exif_config_from_file:end:" . scalar(@error) . "\n";
 
     return @error;
 }

@@ -10,40 +10,35 @@ my @GOOD_FILE = ("t/data/no_comment.jpg",
 my @BAD_FILE = ("t/data/not_a_jpg.txt",
                 "t/data/does_not_exist.jpg");
 
-use Test::Simple tests => 25;
+use Test::Simple tests => 34;
 
 use RDF::Redland;
 use Image::ExifTool;
 use RDF::Redland::Model::ExifTool;
 
 my $exiftool = new Image::ExifTool;
-ok(defined $exiftool, "created ExifTool");
+ok($exiftool, "created ExifTool");
 
-my $storage = new RDF::Redland::Storage("hashes", "test",
+my $storage = new RDF::Redland::Storage("hashes", "exif_meta_data",
                   "new='yes',hash-type='memory'");
-ok(defined $storage, "created storage for RDF model");
+ok($storage, "created storage for RDF model");
 
 my $model = new RDF::Redland::Model::ExifTool($storage, "");
-ok(defined $model, "created RDF model on storage");
-ok($model->isa('RDF::Redland::Model::ExifTool'), "model is right type");
-
-my $config = $model->get_exif_config;
-ok(defined $config, "got default configuration from model");
-
-my @tag = $model->get_exif_tags;
-ok(@tag, "got default list of processable tags from model");
+ok($model, "created RDF model on storage");
+ok($model->isa('RDF::Redland::Model::ExifTool'), 
+   "model is right type (RDF::Redland::Model::ExifTool)");
 
 my @error;
 foreach my $f (@GOOD_FILE) {
     $exiftool->ImageInfo($f);
     @error = $model->add_exif_statements($exiftool);
-    ok(!@error, "processed file $f");
+    ok(!@error, "processed file with default config ($f)");
 }
 
 foreach my $f (@BAD_FILE) {
     $exiftool->ImageInfo($f);
     @error = $model->add_exif_statements($exiftool);
-    ok(@error, "failed to process file $f");
+    ok(@error, "failed to process file with default config");
     foreach my $e (@error) {
         print "\t$e\n";
     }
@@ -51,11 +46,26 @@ foreach my $f (@BAD_FILE) {
 
 foreach my $et ($model, undef) {
     @error = $model->add_exif_statements($et);
-    ok(@error, "failed to process ExifTool");
+    ok(@error, "failed to process ExifTool with default config");
     foreach my $e (@error) {
         print "\t$e\n";
     }
 }
+
+my $default_config = $model->get_exif_config;
+ok($default_config, "got default configuration from model");
+
+my @default_tag = $model->get_exif_tags;
+ok(@default_tag, "got default list of processable tags from model");
+
+@error = $model->set_exif_config($default_config);
+ok(!@error, "reset default config");
+foreach my $e (@error) {
+    print "\t$e\n";
+}
+my @tag = $model->get_exif_tags;
+ok(scalar(@default_tag) == scalar(@tag),
+   "list of processable tags unchanged after config replaced");
 
 my $min_parse = {
     ParseTag => "Comment",
@@ -85,23 +95,45 @@ my $bad_variable = {
     },
     BadVariable => 12,
 };
-my $bad_syntax = {
-    ParseTag => "Comment",
-    ParseSyntax => "two words",
-    ParseSyntax => "",
-    ParseSyntax => undef,
-};
 
-foreach my $c ($min_parse, $min_trans, $config) {
+foreach my $c ($min_parse, $min_trans) {
     @error = $model->set_exif_config($c);
     ok(!@error, "set configuration");
 }
 
 foreach my $c ($parse_no_syntax, $bad_trans, 
-               $bad_variable, $bad_syntax, { }, undef) {
+               $bad_variable, { }, undef) {
     @error = $model->set_exif_config($c);
     ok(@error, "failed to set bad configuration");
     foreach my $e (@error) {
         print "\t$e\n";
     }
+}
+
+foreach my $f ("t/config/min_parse", "t/config/min_trans",
+               "t/config/wikipedia_basic+comment") {
+    @error = $model->set_exif_config_from_file($f);
+    ok(!@error, "set configuration ($f)");
+}
+
+# Ed: tricky to test unreadable config file
+foreach my $f ("t/config/parse_no_syntax", "t/config/bad_trans", 
+               "t/config/bad_variable", "", undef) {
+    @error = $model->set_exif_config_from_file($f);
+    ok(@error, "failed to set bad configuration");
+    foreach my $e (@error) {
+        print "\t$e\n";
+    }
+}
+
+my @exiftool_list = ();
+foreach my $f (@GOOD_FILE, @BAD_FILE) {
+    my $e = new Image::ExifTool;
+    $e->ImageInfo($f);
+    @exiftool_list = (@exiftool_list, $e);
+}
+@error = $model->add_exif_statements(@exiftool_list);
+ok(@error, "failed to process at least one file with other config");
+foreach my $e (@error) {
+    print "\t$e\n";
 }

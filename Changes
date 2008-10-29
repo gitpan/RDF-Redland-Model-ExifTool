@@ -1,5 +1,13 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.07  2008-10-29 08:15:27
+    * added script exif2rdf that uses this class to 
+      print Exif meta data from files as RDF statements
+    * dropped script/synopsis.pl, exif2rdf is a more complete example
+    * added method to set config from file set_exif_config_from_file()
+    * fixed bug where processable tag list was not updated after
+      config was replaced
+
 0.06  2008-10-24 07:26:37
     * synopsis now uses get_exif_tags() to speed up ExifTool ImageInfo()
     * synopsis now undefs serializer to prevent null exception on exit

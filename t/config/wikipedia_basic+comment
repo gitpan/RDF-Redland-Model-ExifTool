@@ -1,0 +1,24 @@
+#
+# wikipedia_basic.cf - get Wikipedia basic image meta data
+#                      and parse value of Comment tag with
+#                      Turtle or RDF/XML syntax
+#
+
+# ExifTool tag to RDF predicate translation
+# Note: URI anchor char '#' must be escaped '\#' or it is treated as comment
+<TranslateTag>
+  Make             http://www.w3.org/2003/12/exif/ns\#make
+  Model            http://www.w3.org/2003/12/exif/ns\#model
+  ShutterSpeed     http://www.w3.org/2003/12/exif/ns\#shutterSpeedValue
+  Aperture         http://www.w3.org/2003/12/exif/ns\#apertureValue
+  DateTimeOriginal http://www.w3.org/2003/12/exif/ns\#dateTimeOriginal
+  FocalLength35efl http://www.w3.org/2003/12/exif/ns\#focalLengthIn35mmFilm
+  Comment          http://www.w3.org/2003/12/exif/ns\#userComment
+</TranslateTag>
+
+# ExifTool tag to parse
+ParseTag Comment
+
+# Redland RDF Parser syntax to parse with
+ParseSyntax turtle
+ParseSyntax rdfxml

@@ -7,11 +7,14 @@ WriteMakefile(
     AUTHOR              => 'Andrew Flint <andrew@theflints.net.nz>',
     VERSION_FROM        => 'lib/RDF/Redland/Model/ExifTool.pm',
     ABSTRACT_FROM       => 'lib/RDF/Redland/Model/ExifTool.pm',
+    EXE_FILES           => [ 'exif2rdf' ],
     PL_FILES            => {},
     PREREQ_PM => {
-	'Image::ExifTool' => 0,
-	'RDF::Redland' => 0,
-	'Regexp::Common' => 0,
+	'Config::General' => 0,  # parses configuration files
+	'Getopt::Long' => 0,     # parses arguments for script exif2rdf
+	'Image::ExifTool' => 0,  # reads files with Exif meta data
+	'RDF::Redland' => 0,     # represents all things RDF
+	'Regexp::Common' => 0,   # validates predicate URIs
 	'Test::More' => 0,
 	'Test::Simple' => 0,
     },

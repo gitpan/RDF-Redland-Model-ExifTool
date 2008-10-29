@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=head1 NAME
+
+exif2rdf.pl - prints Exif meta data from files as RDF statements
+
+=head1 SYNOPSIS
+
+    exif2rdf [-c config] [-b base_uri] [-s syntax] file...
+    
+        -b|--base_uri  base URI, must be absolute HTTP,
+                       default is http://www.theflints.net.nz/
+        -c|--config    load configuration from config file
+        -s|--syntax    RDF syntax for output e.g. ntriples or turtle
+                       default is rdfxml
+        file           containing Exif meta data
+
+=head1 DESCRIPTION
+
+A sample program for Perl class C<RDF::Redland::Model::ExifTool>.
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2008 Andrew Flint, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+use Carp;
+use Getopt::Long;
+use Image::ExifTool;
+use RDF::Redland;
+use RDF::Redland::Model::ExifTool;
+use Regexp::Common qw /URI/;
+
+my $DEFAULT_BASE_URI = "http://www.theflints.net.nz/";
+my $DEFAULT_SYNTAX = "rdfxml";
+
+
+sub synopsis {
+    my $SYNOPSIS = <<EOF;
+synopsis: $0 [-c config] [-b base_uri] [-s syntax] file...
+
+    -b|--base_uri  base URI, must be absolute HTTP,
+                   default is $DEFAULT_BASE_URI
+    -c|--config    load configuration from config file
+    -s|--syntax    RDF syntax for output e.g. ntriples or turtle
+                   default is $DEFAULT_SYNTAX
+    file           containing Exif meta data
+EOF
+    my(@error) = @_;
+
+    my $message = "";
+    foreach my $e (@error) {
+        $message = $message . "$0: $e\n";
+    }
+    $message = $message . $SYNOPSIS;
+
+    die $message;
+}
+
+sub parse_arguments {
+    my($base_uri, $config, $syntax) = ($DEFAULT_BASE_URI, "",
+                                       $DEFAULT_SYNTAX);
+ 
+    if (!GetOptions('base_uri|c=s' => \$base_uri,
+                    'config|c=s' => \$config,
+                    'syntax|s=s' => \$syntax,)) {
+        synopsis;
+    }
+
+    return($base_uri, $config, $syntax);
+}
+
+
+#
+# main()
+#
+my @error = ();
+
+my($base_uri, $config, $syntax) = parse_arguments();
+if (!@ARGV) {
+    @error = (@error, "must be one or more files");
+}
+
+if ($base_uri !~ /$RE{URI}{HTTP}/) {
+    @error = (@error, 
+              "base URI must be absolute HTTP protocol ($base_uri)");
+}
+
+if (@error) {
+    synopsis(@error);
+}
+
+my $exiftool = new Image::ExifTool;
+if (!$exiftool) {
+    croak "$0: failed to create ExifTool";
+}
+
+my $storage = new RDF::Redland::Storage("hashes", "exif_meta_data",
+                       "new='yes',hash-type='memory'");
+if (!$storage) {
+    croak "$0: failed to create storage for model";
+}
+
+my $model = new RDF::Redland::Model::ExifTool($storage, "");
+if (!$model) {
+    croak "$0: failed to create model";
+}
+my $EMPTY_MODEL_N_STATEMENTS = $model->size;
+
+my $serializer = new RDF::Redland::Serializer($syntax);
+if (!$serializer) {
+    croak "$0: failed to create serializer";
+}
+
+if ($config) {
+    @error = $model->set_exif_config_from_file($config);
+    if (@error) {
+        foreach my $e (@error) {
+            print STDERR $e . "\n";
+        }
+        die;
+    }
+}
+
+foreach my $file (@ARGV) {
+    $exiftool->ImageInfo($file, $model->get_exif_tags);
+
+    @error = $model->add_exif_statements($exiftool);
+    foreach my $e (@error) {
+        print STDERR $e . "\n";
+    }
+}
+$model->sync;
+
+if (($EMPTY_MODEL_N_STATEMENTS < $model->size) && (!@error)) {
+    print $serializer->serialize_model_to_string(
+          new RDF::Redland::URINode($base_uri), 
+          $model);
+    undef $serializer;  # prevents librdf_serializer null exception
+}
