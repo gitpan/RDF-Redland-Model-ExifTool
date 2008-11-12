@@ -14,6 +14,7 @@ use warnings;
 use Carp;
 use Config::General;
 use File::Spec;
+use HTML::Entities;
 use Image::ExifTool;
 use RDF::Redland;
 use Regexp::Common qw /URI/;
@@ -193,23 +194,23 @@ sub _parse_tag {
     
             PARSER: foreach my $syntax (@_Parse_Syntax) {
                 my $parser = new RDF::Redland::Parser($syntax);
-                if ($parser) {
-                    $_Parse_Ok = 1;
-                    RDF::Redland::set_log_handler(
-                        \&_remember_parser_error);
-                    my $stream = $parser->parse_string_as_stream(
-                                     $value, $subject->uri);
-                    RDF::Redland::reset_log_handler();
-    
-                    if ($stream && $_Parse_Ok) {
-                        for ( ; !$stream->end; $stream->next) {
-                            my $s = $stream->current;
-                            $s->subject($subject);
-                            @statement = (@statement, $s);
-                        }
+                if (!$parser) {
+                    next PARSER;  # ignore failure to create parser
+                }
 
-                        last PARSER;
+                $_Parse_Ok = 1;
+                RDF::Redland::set_log_handler(
+                    \&_remember_parser_error);
+                my $stream = $parser->parse_string_as_stream(
+                                 $value, $subject->uri);
+                RDF::Redland::reset_log_handler();
+
+                if ($stream && $_Parse_Ok) {
+                    while (!$stream->end) {
+                        @statement = (@statement, $stream->current);
+                        $stream->next;
                     }
+                    last PARSER;
                 }
             }
         } else {
@@ -255,7 +256,8 @@ sub _translate_tag {
         if ($value =~ /$RE{URI}{HTTP}/) {
             $object = new RDF::Redland::URINode("$value");
         } else {
-            $object = new RDF::Redland::LiteralNode("$value");
+            $object = new RDF::Redland::LiteralNode(
+                              encode_entities("$value"));
         }
         if (!$object) {
             croak "_translate_tag: failed to create object" .
@@ -284,11 +286,11 @@ RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
@@ -686,7 +688,7 @@ sub set_exif_config_from_file {
                 @error = ("failed to get config from file ($file)");
             }
         } else {
-            @error = ("config file must be readable ($file)");
+            @error = ("config file must exist and be readable ($file)");
         }
     } else {
         @error = ("config file must be defined");

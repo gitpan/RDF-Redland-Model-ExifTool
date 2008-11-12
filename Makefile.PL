@@ -12,6 +12,8 @@ WriteMakefile(
     PREREQ_PM => {
 	'Config::General' => 0,  # parses configuration files
 	'Getopt::Long' => 0,     # parses arguments for script exif2rdf
+        'HTML::Entities' => 0,   # encodes literal statement objects
+                                 # with HTML entities
 	'Image::ExifTool' => 0,  # reads files with Exif meta data
 	'RDF::Redland' => 0,     # represents all things RDF
 	'Regexp::Common' => 0,   # validates predicate URIs

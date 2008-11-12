@@ -6,11 +6,12 @@ my @GOOD_FILE = ("t/data/no_comment.jpg",
                  "t/data/ntriples_comment.jpg",
                  "t/data/turtle_comment.jpg",
                  "t/data/rdfxml_comment.jpg",
-                 "t/data/artist_uri.jpg");
+                 "t/data/artist_uri.jpg",
+                 "t/data/image+thumb.jpg");
 my @BAD_FILE = ("t/data/not_a_jpg.txt",
                 "t/data/does_not_exist.jpg");
 
-use Test::Simple tests => 34;
+use Test::Simple tests => 35;
 
 use RDF::Redland;
 use Image::ExifTool;

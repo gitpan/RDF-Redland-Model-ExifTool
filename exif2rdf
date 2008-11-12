@@ -5,7 +5,7 @@ use warnings;
 
 =head1 NAME
 
-exif2rdf.pl - prints Exif meta data from files as RDF statements
+exif2rdf - prints Exif meta data from files as RDF statements
 
 =head1 SYNOPSIS
 
@@ -55,13 +55,12 @@ synopsis: $0 [-c config] [-b base_uri] [-s syntax] file...
 EOF
     my(@error) = @_;
 
-    my $message = "";
     foreach my $e (@error) {
-        $message = $message . "$0: $e\n";
+        print STDERR "$0: $e\n";
     }
-    $message = $message . $SYNOPSIS;
+    print STDERR $SYNOPSIS;
 
-    die $message;
+    exit 1;
 }
 
 sub parse_arguments {
@@ -145,3 +144,5 @@ if (($EMPTY_MODEL_N_STATEMENTS < $model->size) && (!@error)) {
           $model);
     undef $serializer;  # prevents librdf_serializer null exception
 }
+
+exit 0;

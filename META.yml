@@ -1,12 +1,13 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         RDF-Redland-Model-ExifTool
-version:      0.07
+version:      0.08
 version_from: lib/RDF/Redland/Model/ExifTool.pm
 installdirs:  site
 requires:
     Config::General:               0
     Getopt::Long:                  0
+    HTML::Entities:                0
     Image::ExifTool:               0
     RDF::Redland:                  0
     Regexp::Common:                0

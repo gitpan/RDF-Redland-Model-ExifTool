@@ -1,5 +1,11 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.08  2008-11-12 07:51:38
+    * encoded special HTML characters in literals, 
+      that are the objects of RDF statements, as HTML entities
+    * fixed bug where file's URI was used as subject on all
+      RDF statements parsed from that file
+
 0.07  2008-10-29 08:15:27
     * added script exif2rdf that uses this class to 
       print Exif meta data from files as RDF statements
