@@ -1,5 +1,8 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.09 2009-05-24 08:45:10
+    * updated contact email address
+
 0.08  2008-11-12 07:51:38
     * encoded special HTML characters in literals, 
       that are the objects of RDF statements, as HTML entities

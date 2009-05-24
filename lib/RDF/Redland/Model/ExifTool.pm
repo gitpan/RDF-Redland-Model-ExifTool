@@ -286,11 +286,11 @@ RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
 =head1 VERSION
 
-Version 0.08
+Version 0.09
 
 =cut
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 =head1 SYNOPSIS
 
@@ -333,20 +333,19 @@ Exif meta data is in tag and value pairs.
 ExifTool reads, writes and updates Exif meta data stored in files.
 See also ExifTool web site
 L<http://www.sno.phy.queensu.ca/~phil/exiftool/>.
-
 RDF meta data is in statements -
 subject, predicate or verb and object triples.
 Redland Libraries provide support for RDF.
+
+This class extends the Redland set of RDF statements 
+C<RDF::Redland::Model> to process Exif meta data read from 
+instances of ExifTool C<Image::ExifTool>.
+
 Sadly the version of Redland currently offered by CPAN
 is out of date and fails testing. 
 For Debian or Fedora download the packages from the
 Redland RDF Libraries web site L<http://librdf.org/>,
 for Ubuntu install package C<librdf-perl> otherwise build from source.
-
-
-This class extends the Redland set of RDF statements 
-C<RDF::Redland::Model> to process Exif meta data read from 
-instances of ExifTool C<Image::ExifTool>.
 
 =head2 Processing meta data
 
@@ -700,7 +699,7 @@ sub set_exif_config_from_file {
 
 =head1 AUTHOR
 
-Andrew Flint, C<< <andrew at theflints.net.nz> >>
+Andrew Flint, C<< <arnhemcr at cpan.org> >>
 
 =head1 BUGS
 

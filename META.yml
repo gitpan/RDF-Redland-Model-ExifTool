@@ -1,10 +1,13 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         RDF-Redland-Model-ExifTool
-version:      0.08
-version_from: lib/RDF/Redland/Model/ExifTool.pm
-installdirs:  site
-requires:
+--- #YAML:1.0
+name:                RDF-Redland-Model-ExifTool
+version:             0.09
+abstract:            extends RDF model to process Exif meta data
+license:             ~
+author:              
+    - Andrew Flint <andrew@theflints.net.nz>
+generated_by:        ExtUtils::MakeMaker version 6.42
+distribution_type:   module
+requires:     
     Config::General:               0
     Getopt::Long:                  0
     HTML::Entities:                0
@@ -13,6 +16,6 @@ requires:
     Regexp::Common:                0
     Test::More:                    0
     Test::Simple:                  0
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30_01
+meta-spec:
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3

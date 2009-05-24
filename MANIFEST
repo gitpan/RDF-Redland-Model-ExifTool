@@ -19,7 +19,5 @@ t/data/no_comment.jpg
 t/data/not_a_jpg.txt
 t/data/ntriples_comment.jpg
 t/data/rdfxml_comment.jpg
-t/data/tag_subset.jpg
 t/data/text_comment.jpg
 t/data/turtle_comment.jpg
-META.yml                                 Module meta-data (added by MakeMaker)
