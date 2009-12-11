@@ -24,7 +24,7 @@ A sample program for Perl class C<RDF::Redland::Model::ExifTool>.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Andrew Flint, all rights reserved.
+Copyright 2008-2010 Andrew Flint, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

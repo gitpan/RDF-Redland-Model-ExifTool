@@ -1,7 +1,7 @@
 #
 # RDF::Redland::Model::ExifTool
 #
-# Copyright 2008 Andrew Flint, all rights reserved.
+# Copyright 2008-2010 Andrew Flint, all rights reserved.
 #
 # This program is free software; you can redistribute it and/or 
 # modify it under the same terms as Perl itself.
@@ -286,11 +286,11 @@ RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
 =head1 VERSION
 
-Version 0.09
+Version 0.10
 
 =cut
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -320,8 +320,8 @@ our $VERSION = '0.09';
     if ($EMPTY_MODEL_N_STATEMENTS < $model->size) {
         $serializer = new RDF::Redland::Serializer("turtle");
         print $serializer->serialize_model_to_string(
-              new RDF::Redland::URINode("http://www.theflints.net.nz/"), 
-              $model);
+              new RDF::Redland::URINode(
+                  "http://www.theflints.net.nz/"), $model);
         undef $serializer;  # prevents librdf_serializer null exception
     }
 
@@ -657,7 +657,8 @@ otherwise returns list of error strings.
 For example this is the file equivalent of the example
 L</Configuration>:
 
-    # Note: URI anchor char '#' must be escaped '\#' or it is treated as comment
+    # Note: URI anchor char '#' must be escaped '\#' or 
+    #       it is treated as comment
     <TranslateTag>
       Aperture      http://www.w3.org/2003/12/exif/ns\#apertureValue
       Comment       http://www.w3.org/2003/12/exif/ns\#userComment
@@ -737,7 +738,7 @@ L<http://search.cpan.org/dist/RDF-Redland-Model-ExifTool>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Andrew Flint, all rights reserved.
+Copyright 2008-2010 Andrew Flint, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
