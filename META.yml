@@ -1,10 +1,10 @@
 --- #YAML:1.0
 name:                RDF-Redland-Model-ExifTool
-version:             0.10
+version:             0.11
 abstract:            extends RDF model to process Exif meta data
 license:             ~
 author:              
-    - Andrew Flint <andrew@theflints.net.nz>
+    - Andrew Flint <andy@theflints.net.nz>
 generated_by:        ExtUtils::MakeMaker version 6.42
 distribution_type:   module
 requires:     
@@ -12,7 +12,7 @@ requires:
     Getopt::Long:                  0
     HTML::Entities:                0
     Image::ExifTool:               0
-    RDF::Redland:                  0
+    RDF::Redland:                  1.0006
     Regexp::Common:                0
     Test::More:                    0
     Test::Simple:                  0

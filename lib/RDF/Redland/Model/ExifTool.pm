@@ -284,32 +284,32 @@ sub _translate_tag {
 
 RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
 
+Using ExifTool and Redland RDF Libraries.
+
 =head1 VERSION
 
-Version 0.10
+Version 0.11
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     use Image::ExifTool;
     use RDF::Redland;
     use RDF::Redland::Model::ExifTool;
-    
-    # creates an RDF model in memory
+
+    # creates an empty RDF model in memory
     $storage = new RDF::Redland::Storage("hashes", "exif_meta_data",
                            "new='yes',hash-type='memory'");
     $model = new RDF::Redland::Model::ExifTool($storage, "");
-    $EMPTY_MODEL_N_STATEMENTS = $model->size;
 
-    # processes Exif meta data from each file into RDF statements
-    # in model and prints any errors
+    # processes Exif meta data from each file
+    # into RDF statements in model and prints any errors
     $exiftool = new Image::ExifTool;
     foreach $file (@ARGV) {
         $exiftool->ImageInfo($file, $model->get_exif_tags);
-
         foreach $error ($model->add_exif_statements($exiftool)) {
             print STDERR $error . "\n";
         }
@@ -317,11 +317,12 @@ our $VERSION = '0.10';
     $model->sync;
 
     # prints any RDF statements in model with Turtle syntax
-    if ($EMPTY_MODEL_N_STATEMENTS < $model->size) {
-        $serializer = new RDF::Redland::Serializer("turtle");
+    if (0 < $model->size) {
+        $SYNTAX = "turtle";
+        $serializer = new RDF::Redland::Serializer($SYNTAX);
+        $BASE_URI = "http://www.theflints.net.nz/";
         print $serializer->serialize_model_to_string(
-              new RDF::Redland::URINode(
-                  "http://www.theflints.net.nz/"), $model);
+                  new RDF::Redland::URINode($BASE_URI), $model);
         undef $serializer;  # prevents librdf_serializer null exception
     }
 
@@ -330,22 +331,24 @@ For a more complete example see script F<exif2rdf> .
 =head1 DESCRIPTION
 
 Exif meta data is in tag and value pairs.
-ExifTool reads, writes and updates Exif meta data stored in files.
-See also ExifTool web site
-L<http://www.sno.phy.queensu.ca/~phil/exiftool/>.
+ExifTool has a Perl library that
+reads Exif meta data stored in files.
 RDF meta data is in statements -
-subject, predicate or verb and object triples.
-Redland Libraries provide support for RDF.
+subject, predicate (or verb) and object triples.
+Redland Libraries have a Perl binding 
+to parse and serialize RDF.
+For more details see
+L<http://www.sno.phy.queensu.ca/~phil/exiftool/> and
+L<http://librdf.org/>.
 
 This class extends the Redland set of RDF statements 
 C<RDF::Redland::Model> to process Exif meta data read from 
 instances of ExifTool C<Image::ExifTool>.
 
-Sadly the version of Redland currently offered by CPAN
-is out of date and fails testing. 
-For Debian or Fedora download the packages from the
-Redland RDF Libraries web site L<http://librdf.org/>,
-for Ubuntu install package C<librdf-perl> otherwise build from source.
+ExifTool is available as both packages and from CPAN.
+However, Redland RDF Libraries are only available as
+packages or source, the CPAN version
+is out of date and fails C<make test>. 
 
 =head2 Processing meta data
 
@@ -392,7 +395,7 @@ add any RDF statements to this model
 This class' configuration is a hash of data structures
 that can be set from a file (with L</set_exif_config_from_file>) 
 or variable (L</set_exif_config>).
-For example a variable configuration:
+For example a configuration in a variable:
 
     $config = {
         ParseTag => ["Comment"],
@@ -407,9 +410,9 @@ For example a variable configuration:
         },
     };
 
-this configuration gets exposure data (Aperture, ISO and ShutterSpeed)
+that gets exposure data (Aperture, ISO and ShutterSpeed)
 then tries to parse RDF statements from any Comment value as 
-Turtle or RDF/XML and failing that treats as text.
+Turtle or RDF/XML or failing that text.
 
 =over
 
@@ -423,16 +426,20 @@ TranslateTag must be set if ParseTag is not.
 
 =item ParseSyntax
 
-list of Redland RDF syntax used in parsing tag values 
+list of Redland RDF syntax used in parsing tag values,
 for example rdfxml, ntriples, turtle and guess.
-See parse command on rdfproc man page for a list of syntax.
+For a list of possible values run the 
+Redland parser utility C<rapper --help> and 
+see the input FORMATs.
 
 =item TranslateTag
 
 hash of ExifTool tag and equivalent RDF predicate.
 
-    exiftool -s my.jpg    # lists all tag and value pairs in file my.jpg
-    exiftool -list        # lists all ExifTool's tags
+For the list of tag value pairs in C<myfile.jpg>
+run C<exiftool -s my.jpg> .
+For the list of tags that Exiftool can process
+run C<exiftool -list> .
 
 Predicates must be absolute HTTP URIs.
 ParseTag and ParseSyntax must be set if TranslateTag is not.
@@ -654,8 +661,7 @@ Replaces this RDF model's L</Configuration> from configuration file.
 Returns empty list if configuration replaced
 otherwise returns list of error strings.
 
-For example this is the file equivalent of the example
-L</Configuration>:
+For example a configuration in a file:
 
     # Note: URI anchor char '#' must be escaped '\#' or 
     #       it is treated as comment
@@ -670,6 +676,8 @@ L</Configuration>:
     
     ParseSyntax turtle
     ParseSyntax rdfxml
+
+This configuration is the same as the example L<Configuration>.
 
 =cut
 

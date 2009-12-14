@@ -7,15 +7,22 @@ use warnings;
 
 exif2rdf - prints Exif meta data from files as RDF statements
 
+Using ExifTool and Redland RDF Libraries.
+
 =head1 SYNOPSIS
 
     exif2rdf [-c config] [-b base_uri] [-s syntax] file...
     
+    Using ExifTool and Redland RDF Libraries:
         -b|--base_uri  base URI, must be absolute HTTP,
                        default is http://www.theflints.net.nz/
-        -c|--config    load configuration from config file
-        -s|--syntax    RDF syntax for output e.g. ntriples or turtle
-                       default is rdfxml
+        -c|--config    load configuration from file
+        -s|--syntax    RDF syntax for output,
+                       for example ntriples or turtle,
+                       default is rdfxml-abbrev. 
+                       For a list of possible values
+                       run the Redland serializer utility
+                       "rapper --help" and see output FORMATs.
         file           containing Exif meta data
 
 =head1 DESCRIPTION
@@ -39,18 +46,23 @@ use RDF::Redland::Model::ExifTool;
 use Regexp::Common qw /URI/;
 
 my $DEFAULT_BASE_URI = "http://www.theflints.net.nz/";
-my $DEFAULT_SYNTAX = "rdfxml";
+my $DEFAULT_SYNTAX = "rdfxml-abbrev";
 
 
 sub synopsis {
     my $SYNOPSIS = <<EOF;
-synopsis: $0 [-c config] [-b base_uri] [-s syntax] file...
+exif2rdf [-c config] [-b base_uri] [-s syntax] file...
 
+Using ExifTool and Redland RDF Libraries:
     -b|--base_uri  base URI, must be absolute HTTP,
-                   default is $DEFAULT_BASE_URI
-    -c|--config    load configuration from config file
-    -s|--syntax    RDF syntax for output e.g. ntriples or turtle
-                   default is $DEFAULT_SYNTAX
+                   default is http://www.theflints.net.nz/
+    -c|--config    load configuration from file
+    -s|--syntax    RDF syntax for output,
+                   for example ntriples or turtle,
+                   default is rdfxml-abbrev. 
+                   For a list of possible values
+                   run the Redland serializer utility
+                   "rapper --help" and see output FORMATs.
     file           containing Exif meta data
 EOF
     my(@error) = @_;
@@ -111,7 +123,6 @@ my $model = new RDF::Redland::Model::ExifTool($storage, "");
 if (!$model) {
     croak "$0: failed to create model";
 }
-my $EMPTY_MODEL_N_STATEMENTS = $model->size;
 
 my $serializer = new RDF::Redland::Serializer($syntax);
 if (!$serializer) {
@@ -138,7 +149,7 @@ foreach my $file (@ARGV) {
 }
 $model->sync;
 
-if (($EMPTY_MODEL_N_STATEMENTS < $model->size) && (!@error)) {
+if ((0 < $model->size) && (!@error)) {
     print $serializer->serialize_model_to_string(
           new RDF::Redland::URINode($base_uri), 
           $model);
