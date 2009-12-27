@@ -8,6 +8,7 @@ t/00-load.t
 t/pod-coverage.t
 t/pod.t
 t/rdf-redland-model-exiftool.t
+t/config/bad_syntax
 t/config/bad_variable
 t/config/min_parse
 t/config/min_trans
@@ -21,3 +22,6 @@ t/data/ntriples_comment.jpg
 t/data/rdfxml_comment.jpg
 t/data/text_comment.jpg
 t/data/turtle_comment.jpg
+t/data/family.jpg
+t/data/lighthouse.jpg
+t/data/ship.jpg

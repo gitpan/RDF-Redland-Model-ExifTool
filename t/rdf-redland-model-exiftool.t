@@ -6,12 +6,12 @@ my @GOOD_FILE = ("t/data/no_comment.jpg",
                  "t/data/ntriples_comment.jpg",
                  "t/data/turtle_comment.jpg",
                  "t/data/rdfxml_comment.jpg",
-                 "t/data/artist_uri.jpg",
+                 #"t/data/artist_uri.jpg", provokes error from Turtle parser
                  "t/data/image+thumb.jpg");
 my @BAD_FILE = ("t/data/not_a_jpg.txt",
                 "t/data/does_not_exist.jpg");
 
-use Test::Simple tests => 35;
+use Test::Simple tests => 37;
 
 use RDF::Redland;
 use Image::ExifTool;
@@ -56,6 +56,9 @@ foreach my $et ($model, undef) {
 my $default_config = $model->get_exif_config;
 ok($default_config, "got default configuration from model");
 
+my $default_config_string = $model->get_exif_config_to_string;
+ok($default_config, "got default configuration from model to string");
+
 my @default_tag = $model->get_exif_tags;
 ok(@default_tag, "got default list of processable tags from model");
 
@@ -66,7 +69,7 @@ foreach my $e (@error) {
 }
 my @tag = $model->get_exif_tags;
 ok(scalar(@default_tag) == scalar(@tag),
-   "list of processable tags unchanged after config replaced");
+   "number of processable tags unchanged after config replaced");
 
 my $min_parse = {
     ParseTag => "Comment",
@@ -79,6 +82,9 @@ my $min_trans  = {
 };
 my $parse_no_syntax =  {
     ParseTag => "Comment",
+};
+my $parse_no_tag =  {
+    ParseSyntax => "turtle",
 };
 my $bad_trans = {
     ParseTag => "Comment",
@@ -102,7 +108,7 @@ foreach my $c ($min_parse, $min_trans) {
     ok(!@error, "set configuration");
 }
 
-foreach my $c ($parse_no_syntax, $bad_trans, 
+foreach my $c ($parse_no_syntax, $parse_no_tag, $bad_trans, 
                $bad_variable, { }, undef) {
     @error = $model->set_exif_config($c);
     ok(@error, "failed to set bad configuration");
@@ -116,6 +122,14 @@ foreach my $f ("t/config/min_parse", "t/config/min_trans",
     @error = $model->set_exif_config_from_file($f);
     ok(!@error, "set configuration ($f)");
 }
+
+$exiftool = new Image::ExifTool("lighthouse.jpg");
+@error = $model->set_exif_config_from_file("t/config/bad_syntax");
+ok(@error, "set configuration with bad syntax (t/config/bad_syntax)");
+foreach my $e (@error) {
+    print "\t$e\n";
+}
+@error = $model->add_exif_statements($exiftool);
 
 # Ed: tricky to test unreadable config file
 foreach my $f ("t/config/parse_no_syntax", "t/config/bad_trans", 

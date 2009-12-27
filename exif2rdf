@@ -12,22 +12,165 @@ Using ExifTool and Redland RDF Libraries.
 =head1 SYNOPSIS
 
     exif2rdf [-c config] [-b base_uri] [-s syntax] file...
+    exif2rdf [-c config] -d
+    exif2rdf -h
     
-    Using ExifTool and Redland RDF Libraries:
         -b|--base_uri  base URI, must be absolute HTTP,
                        default is http://www.theflints.net.nz/
         -c|--config    load configuration from file
+        -d|--dump      print current configuration
+        -h|--help      print help
         -s|--syntax    RDF syntax for output,
-                       for example ntriples or turtle,
-                       default is rdfxml-abbrev. 
+                       for example turtle or rdfxml-abbrev,
+                       default is ntriples. 
                        For a list of possible values
                        run the Redland serializer utility
                        "rapper --help" and see output FORMATs.
         file           containing Exif meta data
 
-=head1 DESCRIPTION
+=head1 TUTORIAL
 
-A sample program for Perl class C<RDF::Redland::Model::ExifTool>.
+Perl class RDF::Redland::Model::ExifTool  
+extends the Redland model or set of RDF statements
+(RDF::Redland::Model) to process Exif meta data from 
+instances of ExifTool (Image::ExifTool).
+This document explains how to use the class through this the 
+example script exif2rdf .
+
+Exif meta data is in tag and value pairs, for example:
+
+    Aperture 4.0
+
+RDF is in subject, predicate (verb) and object triples 
+called statements, for example:
+
+    <file://.../t/data/lighthouse.jpg> <http://...#apertureValue> "4.0" .
+
+This class can:
+
+=over
+
+=item *
+
+translate an Exif tag and its value into an RDF statement
+
+=item *
+
+parse RDF statements from the values of Exif tags
+
+=back
+
+The following sections explain translating and
+L<parsing|"Parse RDF meta data from Exif">.
+The final section explains how to 
+L<find out more|"Find out more about...">. 
+
+=head2 Translate Exif to RDF - camera meta data
+
+Let's get some meta data from an image by running the script
+on one of the test images in the module's distribution:
+
+    exif2rdf t/data/lighthouse.jpg
+
+        <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#focalLengthIn35mmFilm> "6.3 mm" .
+        <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#ISOSpeedRatings> "100" .
+        <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#apertureValue> "5.6" .
+        <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#shutterSpeedValue> "1/1200" .
+        <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#make> "FUJIFILM" .
+        <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#model> "FinePix S5600" .
+        <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#dateTimeOriginal> "2009-01-19T11:37:53" .
+      
+The RDF statements, in ntriples syntax, contains meta data from the camera: 
+exposure, camera model and when the image was taken.
+
+Here's how it works. 
+First the script creates an instance of this class, 
+a model or container for RDF statements. 
+Then the class creates a subject URI from 
+each image file's full path name. 
+The TranslateTag hash in the class' configuration maps 
+an Exif tag name to the equivalent RDF predicate URI. 
+The class tries to translate each tag into a predicate. 
+If successful an RDF statement is created from the 
+subject and predicate with the tag's value as the object. 
+Otherwise the tag is ignored. 
+Finally the script serializes or prints out all the statements 
+in the model.
+
+All the examples in this tutorial use the default configuration 
+which can be replaced.
+
+=head2 Translate Exif to RDF - human meta data
+
+People can add their own meta data to images with Exif tags 
+including Artist, ImageDescription and Comment. 
+Let's try another image:
+
+    exif2rdf t/data/ship.jpg
+
+        <file://.../tutorial/ship.jpg> <http://www.w3.org/2003/12/exif/ns#imageDescription> "a model container ship made of Lego" .
+        <file://.../tutorial/ship.jpg> <http://www.w3.org/2003/12/exif/ns#artist> "Andrew Flint" .
+        ...camera meta data...
+
+The human meta data describes the image and names the artist!
+
+This class will only get meta data from an image. 
+To add or update meta data use ExifTool. 
+
+=head2 Parse RDF meta data from Exif
+
+The human meta data in the last image was plain old text. 
+But the next image has RDF statements in the value of the Comment tag. 
+Try:
+
+    exif2rdf --syntax turtle t/data/family.jpg
+
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        <file://.../tutorial/family.jpg>
+            <http://purl.org/dc/terms/description> "family eating fish and chip lunch by the beach" ;
+            <http://purl.org/dc/terms/spatial> "Raumati South, Wellington, NZ" ;
+            <http://xmlns.com/foaf/0.1/depicts> (
+                <http://www.theflints.net.nz/contact#gtf>
+                <http://www.theflints.net.nz/contact#ajw>
+                <http://www.theflints.net.nz/contact#rdf>
+                <http://www.theflints.net.nz/contact#ojf>
+            ) ;
+            ...camera meta data...
+            <http://xmlns.com/foaf/0.1/maker> <http://www.theflints.net.nz/contact#ajf> .
+
+This time there is a wider range of human meta data, in the turtle syntax, 
+including who appears in the image and where it was taken. 
+The human and camera meta data are simply merged.
+
+In the configuration, ParseTag lists the Exif tags to check for
+statements and ParseSyntax lists the RDF syntax to parse with.
+If a value does not contain RDF that tag is
+L<translated|"Translate Exif to RDF - camera meta data"> instead.
+
+=head2 Find out more about...
+
+=over
+
+=item *
+
+this example script by running C<exif2rdf --help>
+or looking at the code
+
+=item *
+
+this class L<RDF::Redland::Model::ExifTool> and its
+L<Configuration|RDF::Redland::Model::ExifTool/Configuration>
+
+=item *
+
+ExifTool L<Image::ExifTool>
+
+=item *
+
+Redland RDF Libraries Perl interface L<http://librdf.org/docs/perl.html>
+including RDF databases, queries and reasoning
+
+=back
 
 =head1 COPYRIGHT & LICENSE
 
@@ -46,20 +189,22 @@ use RDF::Redland::Model::ExifTool;
 use Regexp::Common qw /URI/;
 
 my $DEFAULT_BASE_URI = "http://www.theflints.net.nz/";
-my $DEFAULT_SYNTAX = "rdfxml-abbrev";
-
+my $DEFAULT_SYNTAX = "ntriples";
 
 sub synopsis {
     my $SYNOPSIS = <<EOF;
 exif2rdf [-c config] [-b base_uri] [-s syntax] file...
+exif2rdf [-c config] -d
+exif2rdf -h
 
-Using ExifTool and Redland RDF Libraries:
     -b|--base_uri  base URI, must be absolute HTTP,
                    default is http://www.theflints.net.nz/
     -c|--config    load configuration from file
+    -d|--dump      print current configuration
+    -h|--help      print help
     -s|--syntax    RDF syntax for output,
-                   for example ntriples or turtle,
-                   default is rdfxml-abbrev. 
+                   for example turtle or rdfxml-abbrev,
+                   default is ntriples. 
                    For a list of possible values
                    run the Redland serializer utility
                    "rapper --help" and see output FORMATs.
@@ -69,23 +214,9 @@ EOF
 
     foreach my $e (@error) {
         print STDERR "$0: $e\n";
+        my $status = 1;
     }
-    print STDERR $SYNOPSIS;
-
-    exit 1;
-}
-
-sub parse_arguments {
-    my($base_uri, $config, $syntax) = ($DEFAULT_BASE_URI, "",
-                                       $DEFAULT_SYNTAX);
- 
-    if (!GetOptions('base_uri|c=s' => \$base_uri,
-                    'config|c=s' => \$config,
-                    'syntax|s=s' => \$syntax,)) {
-        synopsis;
-    }
-
-    return($base_uri, $config, $syntax);
+    print STDERR "\n$SYNOPSIS";
 }
 
 
@@ -94,8 +225,24 @@ sub parse_arguments {
 #
 my @error = ();
 
-my($base_uri, $config, $syntax) = parse_arguments();
-if (!@ARGV) {
+my($base_uri, $config, $dump, $help, $syntax) = (
+       $DEFAULT_BASE_URI, "", "", "", $DEFAULT_SYNTAX);
+ 
+if (!GetOptions('base_uri|c=s' => \$base_uri,
+                'config|c=s' => \$config,
+                'dump' => \$dump,
+                'help' => \$help,
+                'syntax|s=s' => \$syntax,)) {
+    synopsis;
+    exit 1;
+}
+
+if ($help) {
+    synopsis;
+    exit 0;
+}
+
+if ((!$dump) && (!@ARGV)) {
     @error = (@error, "must be one or more files");
 }
 
@@ -106,6 +253,7 @@ if ($base_uri !~ /$RE{URI}{HTTP}/) {
 
 if (@error) {
     synopsis(@error);
+    exit 1;
 }
 
 my $exiftool = new Image::ExifTool;
@@ -139,8 +287,15 @@ if ($config) {
     }
 }
 
+if ($dump) {
+    print $model->get_exif_config_to_string;
+    exit 0;
+}
+
+my @exif_tag = $model->get_exif_tags;
+
 foreach my $file (@ARGV) {
-    $exiftool->ImageInfo($file, $model->get_exif_tags);
+    $exiftool->ImageInfo($file, @exif_tag);
 
     @error = $model->add_exif_statements($exiftool);
     foreach my $e (@error) {
@@ -155,5 +310,8 @@ if ((0 < $model->size) && (!@error)) {
           $model);
     undef $serializer;  # prevents librdf_serializer null exception
 }
+
+undef $model;
+undef $storage;
 
 exit 0;

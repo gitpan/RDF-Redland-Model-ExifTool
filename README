@@ -2,8 +2,8 @@ RDF-Redland-Model-ExifTool
 
 This class:
 
-	* extends the Redland set of RDF statements, or model,
-          to process Exif meta data from ExifTool.
+	* extends the Redland RDF Libraries set of RDF statements, 
+          or model, to process Exif meta data from ExifTool
 	* is used by an example script, exif2rdf, to print
           Exif meta data from files as RDF statements
 
@@ -11,6 +11,12 @@ INSTALLATION
 
 This class depends on non-core Perl modules and classes,
 see PREREQ_PM in Makefile.PL .
+
+Redland RDF Libraries (RDF::Redland) must be installed 
+from a package or built from source.
+For example on Ubuntu install packages librdf-perl and raptor-utils.
+The Redland version on CPAN is out of date and fails
+"make test".
 
 To install this class, run the following commands:
 

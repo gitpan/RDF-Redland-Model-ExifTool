@@ -1,8 +1,18 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.12 2009-12-27 09:03:47
+    * added tutorial to exif2rdf documentation
+    * added exif2rdf options: print config (-d) and synopsis (-h)
+    * changed exif2rdf's default output syntax from 
+      rdfxml-abbrev to ntriples for tutorial
+    * added method to return config as string -
+      get_exif_config_to_string()
+    * added Artist to ParseTag list in default configuration
+    * added missing prereq URI to Makefile.PL
+
 0.11 2009-12-14 07:50:43
     * updated Makefile to require RDF::Redland 1.0006 or later.
-      The CPAN version, 1.00054, fails "make test". 
+      The CPAN version, 1.00054, is out of date and fails "make test". 
     * changed exif2rdf's default output syntax from rdfxml to
       rdfxml-abbrev that serializes lists without blank nodes
 
