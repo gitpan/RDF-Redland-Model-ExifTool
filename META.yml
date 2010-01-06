@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                RDF-Redland-Model-ExifTool
-version:             0.12
+version:             0.13
 abstract:            extends RDF model to process Exif meta data
 license:             ~
 author:              

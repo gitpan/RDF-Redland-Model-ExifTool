@@ -5,27 +5,31 @@ use warnings;
 
 =head1 NAME
 
-exif2rdf - prints Exif meta data from files as RDF statements
+exif2rdf - prints or stores Exif meta data from files as RDF statements
 
 Using ExifTool and Redland RDF Libraries.
 
 =head1 SYNOPSIS
 
     exif2rdf [-c config] [-b base_uri] [-s syntax] file...
+    exif2rdf [-c config] [-b base_uri] -p path [-n|-u] file...
     exif2rdf [-c config] -d
     exif2rdf -h
-    
-        -b|--base_uri  base URI, must be absolute HTTP,
+
+        -b|--base_uri  set base URI, must be absolute HTTP,
                        default is http://www.theflints.net.nz/
         -c|--config    load configuration from file
         -d|--dump      print current configuration
         -h|--help      print help
-        -s|--syntax    RDF syntax for output,
+        -n|--new       create new database, default
+        -p|--path      path of RDF database to store statements
+        -s|--syntax    serialize statements in RDF syntax,
                        for example turtle or rdfxml-abbrev,
                        default is ntriples. 
                        For a list of possible values
                        run the Redland serializer utility
                        "rapper --help" and see output FORMATs.
+        -u|--update    update existing database
         file           containing Exif meta data
 
 =head1 TUTORIAL
@@ -60,8 +64,13 @@ parse RDF statements from the values of Exif tags
 
 =back
 
-The following sections explain translating and
-L<parsing|"Parse RDF meta data from Exif">.
+The following sections give examples of translating and
+L<parsing|"Parse RDF from Exif"> Exif into RDF.
+Those examples serialize or print RDF,
+the next one 
+L<stores|"Store Exif in an RDF database"> RDF in a database.
+The next section looks at ExifTool's RDF features as an
+L<alternative|"Alternatives"> to this script.
 The final section explains how to 
 L<find out more|"Find out more about...">. 
 
@@ -79,7 +88,7 @@ on one of the test images in the module's distribution:
         <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#make> "FUJIFILM" .
         <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#model> "FinePix S5600" .
         <file://.../t/data/lighthouse.jpg> <http://www.w3.org/2003/12/exif/ns#dateTimeOriginal> "2009-01-19T11:37:53" .
-      
+
 The RDF statements, in ntriples syntax, contains meta data from the camera: 
 exposure, camera model and when the image was taken.
 
@@ -117,7 +126,7 @@ The human meta data describes the image and names the artist!
 This class will only get meta data from an image. 
 To add or update meta data use ExifTool. 
 
-=head2 Parse RDF meta data from Exif
+=head2 Parse RDF from Exif
 
 The human meta data in the last image was plain old text. 
 But the next image has RDF statements in the value of the Comment tag. 
@@ -147,6 +156,62 @@ statements and ParseSyntax lists the RDF syntax to parse with.
 If a value does not contain RDF that tag is
 L<translated|"Translate Exif to RDF - camera meta data"> instead.
 
+=head2 Store Exif in an RDF database
+
+So far the RDF statements have been serialized or printed.
+This time the statements will be stored in a database. Try:
+
+    exif2rdf --path exif_meta_data t/data/lighthouse.jpg t/data/ship.jpg t/data/family.jpg
+
+A set of database files, called exif_meta_data-*.db, 
+has been created in the current directory.
+These files contain the meta data from all the images
+in this tutorial.
+To serialize with the Redland RDF processor try:
+
+    rdfproc exif_meta_data serialize turtle
+
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+        <file:///home/andrew/RDF-Redland-Model-ExifTool/t/data/ship.jpg>
+            ...
+
+        <file:///home/andrew/RDF-Redland-Model-ExifTool/t/data/family.jpg>
+            ...
+
+        <file:///home/andrew/RDF-Redland-Model-ExifTool/t/data/lighthouse.jpg>
+            ...
+
+=head2 Alternatives
+
+The ExifTool script has RDF features (C<exiftool -X>).
+This section should help you to choose between
+this class' example script (C<exif2rdf>) and ExifTool's:
+
+=over
+
+=item *
+
+if you need to parse RDF from the values of Exif tags select 
+exif2rdf, exiftool does not parse
+
+=item *
+
+if you need translate all the Exif meta data select exiftool, 
+exif2rdf only translates selected tags
+
+=item *
+
+if you need to serialize to a syntax other than RDF/XML
+select exif2rdf, exiftool does not offer other syntax
+
+=item *
+
+if you need to store RDF in a database select exif2rdf,
+exiftool does not store
+
+=back
+
 =head2 Find out more about...
 
 =over
@@ -168,7 +233,7 @@ ExifTool L<Image::ExifTool>
 =item *
 
 Redland RDF Libraries Perl interface L<http://librdf.org/docs/perl.html>
-including RDF databases, queries and reasoning
+which includes querying and reasoning on RDF databases
 
 =back
 
@@ -194,20 +259,24 @@ my $DEFAULT_SYNTAX = "ntriples";
 sub synopsis {
     my $SYNOPSIS = <<EOF;
 exif2rdf [-c config] [-b base_uri] [-s syntax] file...
+exif2rdf [-c config] [-b base_uri] -p path [-n|-u] file...
 exif2rdf [-c config] -d
 exif2rdf -h
 
-    -b|--base_uri  base URI, must be absolute HTTP,
+    -b|--base_uri  set base URI, must be absolute HTTP,
                    default is http://www.theflints.net.nz/
     -c|--config    load configuration from file
     -d|--dump      print current configuration
     -h|--help      print help
-    -s|--syntax    RDF syntax for output,
+    -n|--new       create new database, default
+    -p|--path      path of RDF database to store statements
+    -s|--syntax    serialize statements in RDF syntax,
                    for example turtle or rdfxml-abbrev,
                    default is ntriples. 
                    For a list of possible values
                    run the Redland serializer utility
                    "rapper --help" and see output FORMATs.
+    -u|--update    update existing database
     file           containing Exif meta data
 EOF
     my(@error) = @_;
@@ -225,14 +294,17 @@ EOF
 #
 my @error = ();
 
-my($base_uri, $config, $dump, $help, $syntax) = (
-       $DEFAULT_BASE_URI, "", "", "", $DEFAULT_SYNTAX);
+my $base_uri = $DEFAULT_BASE_URI;
+my($config, $dump, $help, $new, $path, $syntax, $update);
  
 if (!GetOptions('base_uri|c=s' => \$base_uri,
                 'config|c=s' => \$config,
                 'dump' => \$dump,
                 'help' => \$help,
-                'syntax|s=s' => \$syntax,)) {
+                'new' => \$new,
+                'path|c=s' => \$path,
+                'syntax|c=s' => \$syntax,
+                'update' => \$update,)) {
     synopsis;
     exit 1;
 }
@@ -242,13 +314,43 @@ if ($help) {
     exit 0;
 }
 
-if ((!$dump) && (!@ARGV)) {
-    @error = (@error, "must be one or more files");
-}
-
 if ($base_uri !~ /$RE{URI}{HTTP}/) {
     @error = (@error, 
               "base URI must be absolute HTTP protocol ($base_uri)");
+}
+
+my $store_type = "memory";
+my $store_dir = ".";
+my $store = "exif_meta_data";
+if ((!$syntax) && (!$path)) {
+    $syntax = $DEFAULT_SYNTAX;
+} elsif (($syntax) && (!$path)) {
+} elsif ((!$syntax) && ($path)) {
+    $store_type = "bdb";
+    my $p = File::Spec->rel2abs($path);
+    if ($p) {
+        my($v, $d);
+        ($v, $d, $store) = File::Spec->splitpath($p);
+        $store_dir = File::Spec->catdir($v, $d);
+    } else {
+        @error = (@error, "bad storage path ($path)");
+    }
+} else {
+    @error = (@error, "set either syntax or path not both " .
+                      "($syntax, $path)");
+}
+
+my $initialise = "yes";
+if (($new) && (!$update)) {
+} elsif ((!$new) && ($update)) {
+    $initialise = "no";
+} elsif ((!$new) && (!$update)) {
+} else {
+    @error = (@error, "set either new or update not both");
+}
+
+if ((!$dump) && (!@ARGV)) {
+    @error = (@error, "must be one or more files");
 }
 
 if (@error) {
@@ -261,8 +363,9 @@ if (!$exiftool) {
     croak "$0: failed to create ExifTool";
 }
 
-my $storage = new RDF::Redland::Storage("hashes", "exif_meta_data",
-                       "new='yes',hash-type='memory'");
+my $storage = new RDF::Redland::Storage("hashes", "$store",
+                       "new='$initialise',hash-type='$store_type'," .
+                       "dir='$store_dir'");
 if (!$storage) {
     croak "$0: failed to create storage for model";
 }
@@ -272,9 +375,12 @@ if (!$model) {
     croak "$0: failed to create model";
 }
 
-my $serializer = new RDF::Redland::Serializer($syntax);
-if (!$serializer) {
-    croak "$0: failed to create serializer";
+my $serializer = undef;
+if ($syntax) {
+    $serializer = new RDF::Redland::Serializer($syntax);
+    if (!$serializer) {
+        croak "$0: failed to create serializer";
+    }
 }
 
 if ($config) {
@@ -304,7 +410,7 @@ foreach my $file (@ARGV) {
 }
 $model->sync;
 
-if ((0 < $model->size) && (!@error)) {
+if ((0 < $model->size) && (!@error) && ($serializer)) {
     print $serializer->serialize_model_to_string(
           new RDF::Redland::URINode($base_uri), 
           $model);
