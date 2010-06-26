@@ -5,7 +5,8 @@ use warnings;
 
 =head1 NAME
 
-exif2rdf - prints or stores Exif meta data from files as RDF statements
+exif2rdf - reads Exif meta data from files then 
+           prints or stores as RDF statements
 
 Using ExifTool and Redland RDF Libraries.
 
@@ -34,11 +35,11 @@ Using ExifTool and Redland RDF Libraries.
 
 =head1 TUTORIAL
 
-Perl class RDF::Redland::Model::ExifTool  
+This class, RDF::Redland::Model::ExifTool ,
 extends the Redland model or set of RDF statements
-(RDF::Redland::Model) to process Exif meta data from 
+(RDF::Redland::Model) to read Exif meta data from 
 instances of ExifTool (Image::ExifTool).
-This document explains how to use the class through this the 
+This document explains how to use the class through the 
 example script exif2rdf .
 
 Exif meta data is in tag and value pairs, for example:
@@ -66,18 +67,15 @@ parse RDF statements from the values of Exif tags
 
 The following sections give examples of translating and
 L<parsing|"Parse RDF from Exif"> Exif into RDF.
-Those examples serialize or print RDF,
-the next one 
+Those examples serialize or print RDF, the final one 
 L<stores|"Store Exif in an RDF database"> RDF in a database.
-The next section looks at ExifTool's RDF features as an
-L<alternative|"Alternatives"> to this script.
 The final section explains how to 
 L<find out more|"Find out more about...">. 
 
 =head2 Translate Exif to RDF - camera meta data
 
 Let's get some meta data from an image by running the script
-on one of the test images in the module's distribution:
+on one of the test images in this class' distribution:
 
     exif2rdf t/data/lighthouse.jpg
 
@@ -96,7 +94,7 @@ Here's how it works.
 First the script creates an instance of this class, 
 a model or container for RDF statements. 
 Then the class creates a subject URI from 
-each image file's full path name. 
+the image file's full path name. 
 The TranslateTag hash in the class' configuration maps 
 an Exif tag name to the equivalent RDF predicate URI. 
 The class tries to translate each tag into a predicate. 
@@ -123,8 +121,11 @@ Let's try another image:
 
 The human meta data describes the image and names the artist!
 
-This class will only get meta data from an image. 
-To add or update meta data use ExifTool. 
+This class can only read meta data from an image,
+use ExifTool to add or update.
+
+Both exif2rdf and exiftool -X translate but
+only exif2rdf can parse meta data from the values of Exif tags.
 
 =head2 Parse RDF from Exif
 
@@ -134,18 +135,19 @@ Try:
 
     exif2rdf --syntax turtle t/data/family.jpg
 
-        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-        <file://.../tutorial/family.jpg>
+        <file://.../t/data/family.jpg>
             <http://purl.org/dc/terms/description> "family eating fish and chip lunch by the beach" ;
             <http://purl.org/dc/terms/spatial> "Raumati South, Wellington, NZ" ;
             <http://xmlns.com/foaf/0.1/depicts> (
-                <http://www.theflints.net.nz/contact#gtf>
-                <http://www.theflints.net.nz/contact#ajw>
-                <http://www.theflints.net.nz/contact#rdf>
-                <http://www.theflints.net.nz/contact#ojf>
+                <http://www.theflints.net.nz/gregory/about#me>
+                <http://www.theflints.net.nz/alison/about#me>
+                <http://www.theflints.net.nz/russell/about#me>
+                <http://www.theflints.net.nz/oliver/about#me> 
             ) ;
-            ...camera meta data...
-            <http://xmlns.com/foaf/0.1/maker> <http://www.theflints.net.nz/contact#ajf> .
+            <http://xmlns.com/foaf/0.1/maker> <http://www.theflints.net.nz/andrew/about#me> .
+            <http://www.w3.org/2003/12/exif/ns#ISOSpeedRatings> "50" ;
+            <http://www.w3.org/2003/12/exif/ns#apertureValue> "4.5" ;
+            ...more camera meta data...
 
 This time there is a wider range of human meta data, in the turtle syntax, 
 including who appears in the image and where it was taken. 
@@ -163,54 +165,24 @@ This time the statements will be stored in a database. Try:
 
     exif2rdf --path exif_meta_data t/data/lighthouse.jpg t/data/ship.jpg t/data/family.jpg
 
-A set of database files, called exif_meta_data-*.db, 
-has been created in the current directory.
-These files contain the meta data from all the images
+This creates a set of database files, in the current directory,
+called exif_meta_data-*.db ,
+containing the meta data from all the images
 in this tutorial.
-To serialize with the Redland RDF processor try:
+To serialize with Redland RDF try:
 
     rdfproc exif_meta_data serialize turtle
 
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
-        <file:///home/andrew/RDF-Redland-Model-ExifTool/t/data/ship.jpg>
+        <file://.../t/data/ship.jpg>
             ...
 
-        <file:///home/andrew/RDF-Redland-Model-ExifTool/t/data/family.jpg>
+        <file://.../t/data/family.jpg>
             ...
 
-        <file:///home/andrew/RDF-Redland-Model-ExifTool/t/data/lighthouse.jpg>
+        <file://.../t/data/lighthouse.jpg>
             ...
-
-=head2 Alternatives
-
-The ExifTool script has RDF features (C<exiftool -X>).
-This section should help you to choose between
-this class' example script (C<exif2rdf>) and ExifTool's:
-
-=over
-
-=item *
-
-if you need to parse RDF from the values of Exif tags select 
-exif2rdf, exiftool does not parse
-
-=item *
-
-if you need translate all the Exif meta data select exiftool, 
-exif2rdf only translates selected tags
-
-=item *
-
-if you need to serialize to a syntax other than RDF/XML
-select exif2rdf, exiftool does not offer other syntax
-
-=item *
-
-if you need to store RDF in a database select exif2rdf,
-exiftool does not store
-
-=back
 
 =head2 Find out more about...
 
@@ -218,7 +190,7 @@ exiftool does not store
 
 =item *
 
-this example script by running C<exif2rdf --help>
+this example script by running exif2rdf --help
 or looking at the code
 
 =item *
@@ -233,7 +205,7 @@ ExifTool L<Image::ExifTool>
 =item *
 
 Redland RDF Libraries Perl interface L<http://librdf.org/docs/perl.html>
-which includes querying and reasoning on RDF databases
+including querying and reasoning with RDF databases
 
 =back
 
@@ -350,7 +322,7 @@ if (($new) && (!$update)) {
 }
 
 if ((!$dump) && (!@ARGV)) {
-    @error = (@error, "must be one or more files");
+    @error = (@error, "must be file..., --dump or --help");
 }
 
 if (@error) {

@@ -3,7 +3,7 @@ RDF-Redland-Model-ExifTool
 This class:
 
 	* extends the Redland RDF Libraries set of RDF statements, 
-          or model, to process Exif meta data from ExifTool
+          or model, to read Exif meta data from ExifTool
 	* is used by an example script, exif2rdf, to print
           Exif meta data from files as RDF statements
 

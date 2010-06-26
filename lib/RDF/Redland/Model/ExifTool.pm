@@ -24,14 +24,13 @@ use base qw(RDF::Redland::Model);
 
 #----default configuration:begin: see L</Configuration>----#
 
-# Exif tag to number of times RDF has been parsed from its value,
-# see L</_parse_tag>
+# successful RDF parse count for each tag, see L</_parse_tag>
 my %_Parse_Tag = (
     Artist => 0,
     Comment => 0,
     ImageDescription => 0,);
 
-# RDF syntax to number of successful parses, see L</_parse_tag>
+# successful parses count for each RDF syntax, see L</_parse_tag>
 my %_Parse_Syntax = (
     turtle => 0,
     rdfxml => 0,);
@@ -56,7 +55,7 @@ my %_Translate_Tag = (
 );
 #----default configuration:end----#
 
-# last RDF parse status, 
+# last RDF parse status,
 # see L</_parse_tag> and L</_remember_parser_error>
 my $_Last_Parse_Status;
 
@@ -65,7 +64,7 @@ my @_Tag = ();
 
 
 #
-# Creates file scheme URI node for file read by exiftool.
+# Creates URI node for file read by exiftool.
 # Assumes exiftool is class Image::ExifTool.
 # Returns URI as RDF::Redland::URINode or 
 # undef if could not create node.
@@ -103,8 +102,8 @@ sub _get_subject {
 }
 
 #
-# Gets Exif tag and value pairs from exiftool ignoring
-# duplicate tags and tags with undefined or empty values.
+# Gets Exif tag and value pairs from exiftool.
+# Ignores duplicate tags and those with undefined or empty values.
 # Assumes exiftool is class Image::ExifTool.
 # Returns tag to value hash.
 #
@@ -135,7 +134,7 @@ sub _get_tags {
 
 #
 # Parses RDF statements about subject from 
-# value of Exif tag using each RDF syntax in turn.
+# value of Exif tag with each RDF syntax in turn.
 # Assumes tag is string, tag2value is hash and 
 # subject is class RDF::Redland::URINode.
 # Returns statements from first successful parse or empty list.
@@ -175,7 +174,7 @@ sub _parse_tag {
             }
         }
     } else {
-        # ignores tag that is not on list to be parsed
+        # ignores tag not listed for parsing
     }
 #print STDERR "_parse_tag:end:" . scalar(@statement) . "\n";
 
@@ -183,8 +182,8 @@ sub _parse_tag {
 }
 
 #
-# Remembers last attempt to parse RDF failed.
-# RDF Redland Parser error handler used by _parse_tag().
+# Remembers last RDF parse was a failure.
+# RDF Redland Parser error handler used by L<_parse_tag()>.
 #
 sub _remember_parser_error { 
     $_Last_Parse_Status = 0;
@@ -195,7 +194,7 @@ sub _remember_parser_error {
 # Translates Exif tag and value into RDF statement about subject.
 # Assumes tag is string, tag2value is hash and 
 # subject is class RDF::Redland::URINode.
-# Returns a one statement list or
+# Returns the statement in a list or
 # empty list if there was no RDF predicate translation for tag.
 #
 sub _translate_tag {
@@ -210,6 +209,9 @@ sub _translate_tag {
         # rewrite values
         if ($tag eq "FocalLength35efl") {
             $value =~ s/^.* ([0-9\.]+).*$/$1/;
+        } elsif ($tag eq "DateTimeOriginal") {
+            # from "YYYY:MM:DD " to "YYYY-MM-DDT"
+            $value =~ s/^([0-9]{4}):([0-9]{2}):([0-9]{2}) /$1-$2-$3T/;
         }
 
         my $object;
@@ -242,17 +244,17 @@ sub _translate_tag {
 
 =head1 NAME
 
-RDF::Redland::Model::ExifTool - extends RDF model to process Exif meta data
+RDF::Redland::Model::ExifTool - extends RDF model to read Exif meta data
 
 Using ExifTool and Redland RDF Libraries.
 
 =head1 VERSION
 
-Version 0.13
+Version 0.14
 
 =cut
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 =head1 SYNOPSIS
 
@@ -265,19 +267,20 @@ our $VERSION = '0.13';
                            "new='yes',hash-type='memory'");
     $model = new RDF::Redland::Model::ExifTool($storage, "");
 
-    # processes Exif meta data from each file
-    # into RDF statements in model,
-    # using the default configuration, and prints any errors
+    # reads Exif meta data from files and
+    # processes into RDF statements in model
     $exiftool = new Image::ExifTool;
     foreach $file (@ARGV) {
         $exiftool->ImageInfo($file, $model->get_exif_tags);
+
+        # prints any errors
         foreach $error ($model->add_exif_statements($exiftool)) {
             print STDERR $error . "\n";
         }
     }
     $model->sync;
 
-    # prints any RDF statements in model with Turtle syntax
+    # prints any RDF statements with Turtle syntax
     if (0 < $model->size) {
         $SYNTAX = "turtle";
         $serializer = new RDF::Redland::Serializer($SYNTAX);
@@ -304,14 +307,14 @@ For more details on ExifTool and Redland see
 L<Image::ExifTool> and L<http://librdf.org/docs/perl.html>.
 
 This class extends the Redland model or set of RDF statements
-(RDF::Redland::Model) to process Exif meta data from 
+(RDF::Redland::Model) to read Exif meta data from 
 instances of ExifTool (Image::ExifTool).
 The programmer can use all the features of ExifTool and
 Redland including RDF databases, querying and reasoning.
 
 This class depends on non-core Perl modules and classes.
-CPAN has all of them except RDF::Redland, 
-see this class' README for more details.
+All are available from CPAN except RDF::Redland
+see this class' README for details.
 
 =head2 Configuration
 
@@ -321,24 +324,25 @@ or variable (L</set_exif_config>).
 For example a configuration in a variable:
 
   $config = {
+
+    # tries to parse RDF statements from value of Comment tag
+    # with Turtle or RDF/XML syntax
     ParseTag => ["Comment"],
     ParseSyntax => ["turtle", "rdfxml"],
+
+    # failing that translates Comment tag and value into an RDF statement
     TranslateTag => {
+      Comment => "http://www.w3.org/2003/12/exif/ns#userComment",
+
+      # translates Aperture and ShutterSpeed tags too
       Aperture => 
         "http://www.w3.org/2003/12/exif/ns#apertureValue",
-      Comment => "http://www.w3.org/2003/12/exif/ns#userComment",
       ShutterSpeed => 
         "http://www.w3.org/2003/12/exif/ns#shutterSpeedValue",
     },
   };
 
-that gets exposure data (Aperture and ShutterSpeed)
-then tries to parse RDF statements from any Comment value as 
-Turtle or RDF/XML or failing that translates to text.
-
-To dump the default configuration
-(with L</get_exif_config> and L</get_exif_config_to_string>)
-run this class' example script:
+To dump the default configuration run this class' example script:
 
     exif2rdf --dump
 
@@ -354,46 +358,47 @@ TranslateTag must be set if ParseTag is not.
 
 =item B<ParseSyntax>
 
-list of Redland RDF syntax used in parsing tag values,
+list of Redland RDF syntax used to parse tag values,
 for example rdfxml, ntriples, turtle and guess.
-For a list of possible values run the 
-Redland parser utility C<rapper --help> and 
-see the input FORMATs.
+For a list of possible values run:
+
+    rapper --help
+
+and see the input FORMATs.
 
 =item B<TranslateTag>
 
 hash of Exif tag and equivalent RDF predicate.
 
-For the list of tag value pairs in an image run:
+For the list of tags and their values in a file run:
 
     exiftool -s my.jpg
 
-For the list of tags that ExifTool can process run: 
+For the list of tags that ExifTool can read run: 
 
     exiftool -list
 
-Predicates must be absolute HTTP URIs. 
-See these schemas with predicates for:
+ParseTag and ParseSyntax must be set if TranslateTag is not.
+
+Predicates must be absolute HTTP URIs, 
+here are some useful RDF schemas:
 
 =over
 
 =item *
 
-Exif meta data L<http://www.w3.org/2003/12/exif/> 
+Exif L<http://www.w3.org/2003/12/exif/> 
 
 =item *
 
-image file meta data
+file
 L<http://dublincore.org/documents/dcmi-terms/> 
 
 =item *
 
-human meta data
 Friend of a Friend (FOAF) L<http://xmlns.com/foaf/0.1/>
 
 =back
-
-ParseTag and ParseSyntax must be set if TranslateTag is not.
 
 =back
 
@@ -404,8 +409,7 @@ ParseTag and ParseSyntax must be set if TranslateTag is not.
 Processes Exif meta data from list of ExifTools
 into RDF statements stored in this model using L</Configuration>.
 
-Returns empty list if successful
-otherwise returns list of error strings.
+Returns empty list if successful or list of error strings.
 
 =cut
 
@@ -531,14 +535,12 @@ sub get_exif_config_to_string {
 Returns list of Exif tags that can be processed by this 
 RDF model, the tags in L</Configuration>.
 
-By default ExifTool's ImageInfo gets all tags from a file.
-Getting only the subset of tags this model can process
-speeds ExifTool up. For example:
+By default ExifTool's ImageInfo reads all tags but only a subset of
+those tags can be processed by a model.
+This method speeds up ExifTool by only getting those tags
+that this model can process. For example:
 
     $exiftool->ImageInfo("my.jpg", $model->get_exif_tags)
-
-asks ExifTool to get from my.jpg only those tag and value pairs 
-this model can process.
 
 =cut
 
@@ -566,8 +568,8 @@ sub get_exif_tags {
 
 Replaces this RDF model's L</Configuration>.
 
-Returns empty list if configuration replaced
-otherwise returns list of error strings.
+Returns empty list if configuration replaced or
+list of error strings.
 
 =cut
 
@@ -679,12 +681,11 @@ sub set_exif_config {
 
 =head2 set_exif_config_from_file
 
-Replaces this RDF model's L</Configuration> from configuration file. 
+Replaces this RDF model's L</Configuration> from file. 
 
-Returns empty list if configuration replaced
-otherwise returns list of error strings.
+Returns empty list if configuration replaced or list of error strings.
 
-For example a configuration in a file:
+For example the configuration file:
 
     # Note: URI anchor char '#' must be escaped '\#' or 
     #       it is treated as a comment
@@ -699,7 +700,7 @@ For example a configuration in a file:
     ParseSyntax turtle
     ParseSyntax rdfxml
 
-This configuration is the same as the example L</Configuration>.
+is the equivalent of the variable L</Configuration>.
 
 =cut
 
