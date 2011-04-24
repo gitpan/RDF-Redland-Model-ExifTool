@@ -1,5 +1,10 @@
 Revision history for RDF-Redland-Model-ExifTool
 
+0.15 2011/04/24 22:50:00
+    * added tests where parsing RDF from comments fails but 
+      translating succeeds: artist_uri.jpg and bad_turtle_comment.jpg
+    * corrected ntriples test file ntriples_comment.jpg
+
 0.14 2010/06/26 22:11:08
     * added rewrite for YYYY:MM:DD dates
     * tidied up comments throughout the class

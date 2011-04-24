@@ -15,6 +15,7 @@ t/config/min_trans
 t/config/parse_no_syntax
 t/config/wikipedia_basic+comment
 t/data/artist_uri.jpg
+t/data/bad_turtle_comment.jpg
 t/data/image+thumb.jpg
 t/data/no_comment.jpg
 t/data/not_a_jpg.txt

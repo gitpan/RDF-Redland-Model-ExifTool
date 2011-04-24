@@ -18,7 +18,7 @@ Using ExifTool and Redland RDF Libraries.
     exif2rdf -h
 
         -b|--base_uri  set base URI, must be absolute HTTP,
-                       default is http://www.theflints.net.nz/
+                       default is http://theflints.net.nz/
         -c|--config    load configuration from file
         -d|--dump      print current configuration
         -h|--help      print help
@@ -139,12 +139,12 @@ Try:
             <http://purl.org/dc/terms/description> "family eating fish and chip lunch by the beach" ;
             <http://purl.org/dc/terms/spatial> "Raumati South, Wellington, NZ" ;
             <http://xmlns.com/foaf/0.1/depicts> (
-                <http://www.theflints.net.nz/gregory/about#me>
-                <http://www.theflints.net.nz/alison/about#me>
-                <http://www.theflints.net.nz/russell/about#me>
-                <http://www.theflints.net.nz/oliver/about#me> 
+                <http://theflints.net.nz/gregory/about#me>
+                <http://theflints.net.nz/alison/about#me>
+                <http://theflints.net.nz/russell/about#me>
+                <http://theflints.net.nz/oliver/about#me> 
             ) ;
-            <http://xmlns.com/foaf/0.1/maker> <http://www.theflints.net.nz/andrew/about#me> .
+            <http://xmlns.com/foaf/0.1/maker> <http://theflints.net.nz/andrew/about#me> .
             <http://www.w3.org/2003/12/exif/ns#ISOSpeedRatings> "50" ;
             <http://www.w3.org/2003/12/exif/ns#apertureValue> "4.5" ;
             ...more camera meta data...
@@ -225,7 +225,7 @@ use RDF::Redland;
 use RDF::Redland::Model::ExifTool;
 use Regexp::Common qw /URI/;
 
-my $DEFAULT_BASE_URI = "http://www.theflints.net.nz/";
+my $DEFAULT_BASE_URI = "http://theflints.net.nz/";
 my $DEFAULT_SYNTAX = "ntriples";
 
 sub synopsis {
@@ -236,7 +236,7 @@ exif2rdf [-c config] -d
 exif2rdf -h
 
     -b|--base_uri  set base URI, must be absolute HTTP,
-                   default is http://www.theflints.net.nz/
+                   default is $DEFAULT_BASE_URI
     -c|--config    load configuration from file
     -d|--dump      print current configuration
     -h|--help      print help
@@ -244,7 +244,7 @@ exif2rdf -h
     -p|--path      path of RDF database to store statements
     -s|--syntax    serialize statements in RDF syntax,
                    for example turtle or rdfxml-abbrev,
-                   default is ntriples. 
+                   default is $DEFAULT_SYNTAX. 
                    For a list of possible values
                    run the Redland serializer utility
                    "rapper --help" and see output FORMATs.

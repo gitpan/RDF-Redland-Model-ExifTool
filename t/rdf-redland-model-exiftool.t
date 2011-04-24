@@ -5,13 +5,14 @@ my @GOOD_FILE = ("t/data/no_comment.jpg",
                  "t/data/text_comment.jpg",
                  "t/data/ntriples_comment.jpg",
                  "t/data/turtle_comment.jpg",
+                 "t/data/bad_turtle_comment.jpg",
                  "t/data/rdfxml_comment.jpg",
-                 #"t/data/artist_uri.jpg", provokes error from Turtle parser
+                 "t/data/artist_uri.jpg",
                  "t/data/image+thumb.jpg");
 my @BAD_FILE = ("t/data/not_a_jpg.txt",
                 "t/data/does_not_exist.jpg");
 
-use Test::Simple tests => 37;
+use Test::Simple tests => 39;
 
 use RDF::Redland;
 use Image::ExifTool;

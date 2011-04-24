@@ -1,19 +1,27 @@
 --- #YAML:1.0
-name:                RDF-Redland-Model-ExifTool
-version:             0.14
-abstract:            extends RDF model to read Exif meta data
-license:             ~
-author:              
+name:               RDF-Redland-Model-ExifTool
+version:            0.15
+abstract:           extends RDF model to read Exif meta data
+author:
     - Andrew Flint <andy@theflints.net.nz>
-generated_by:        ExtUtils::MakeMaker version 6.42
-distribution_type:   module
-requires:     
-    Config::General:               0
-    HTML::Entities:                0
-    Image::ExifTool:               0
-    RDF::Redland:                  1.0006
-    Regexp::Common:                0
-    URI:                           0
+license:            unknown
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    Config::General:  0
+    HTML::Entities:   0
+    Image::ExifTool:  0
+    RDF::Redland:     1.0006
+    Regexp::Common:   0
+    URI:              0
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.55_02
 meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

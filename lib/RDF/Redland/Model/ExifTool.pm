@@ -1,7 +1,7 @@
 #
 # RDF::Redland::Model::ExifTool
 #
-# Copyright 2008-2010 Andrew Flint, all rights reserved.
+# Copyright 2008-2011 Andrew Flint, all rights reserved.
 #
 # This program is free software; you can redistribute it and/or 
 # modify it under the same terms as Perl itself.
@@ -250,11 +250,11 @@ Using ExifTool and Redland RDF Libraries.
 
 =head1 VERSION
 
-Version 0.14
+Version 0.15
 
 =cut
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 =head1 SYNOPSIS
 
@@ -284,7 +284,7 @@ our $VERSION = '0.14';
     if (0 < $model->size) {
         $SYNTAX = "turtle";
         $serializer = new RDF::Redland::Serializer($SYNTAX);
-        $BASE_URI = "http://www.theflints.net.nz/";
+        $BASE_URI = "http://theflints.net.nz/";
         print $serializer->serialize_model_to_string(
                   new RDF::Redland::URINode($BASE_URI), $model);
         undef $serializer;
